@@ -141,8 +141,10 @@
   <ItemGroup>
     <ClCompile Include="DisplayWin32.cpp" />
     <ClCompile Include="Game.cpp" />
+    <ClCompile Include="GameComponent.cpp" />
     <ClCompile Include="InputDevice.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="TriangleComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="MiniTri.fx">
@@ -152,7 +154,9 @@
   <ItemGroup>
     <ClInclude Include="DisplayWin32.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameComponent.h" />
     <ClInclude Include="InputDevice.h" />
+    <ClInclude Include="TriangleComponent.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

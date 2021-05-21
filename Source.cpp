@@ -5,7 +5,7 @@
 
 int main() {
 	Game test;
-	test.Initialize();
+	test.Run();
 	MSG msg = {};
 	bool isExitRequested = false;
 	while (!isExitRequested) { // ÷икл до сообщени€ о выходе от окна или пользовател€

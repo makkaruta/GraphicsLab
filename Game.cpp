@@ -2,9 +2,27 @@
 
 using namespace DirectX;
 
-int Game::Initialize() {
+void Game::Initialize() {
+	DirectX::XMFLOAT4 positions[] = {
+		XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),
+		XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),
+		XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f),
+		XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f),
+	};
+	DirectX::XMFLOAT4 colors[] = {
+		XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f),
+		XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f),
+		XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f),
+		XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+	};
+	int indeces[] = { 0,1,2, 1,0,3 };
+	Components.push_back(TriangleComponent(positions,colors,indeces));
+}
+
+int Game::Run() {
 
 	Display.CreateDisplay();
+	Initialize();
 
 	HRESULT res; // информация о результате вызова (флаги статуса)
 
@@ -126,6 +144,7 @@ int Game::Initialize() {
 		vertexBC->GetBufferSize(),
 		&layout);
 	
+	
 	DirectX::XMFLOAT4 positions[] = {
 		XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f),
 		XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f),
@@ -214,6 +233,7 @@ int Game::Initialize() {
 	viewport.MinDepth = 0;
 	viewport.MaxDepth = 1.0f;
 	context->RSSetViewports(1, &viewport); // первый параметр - количество окон
+	return 0;
 }
 
 void Game::DestroyResources() {

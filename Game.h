@@ -1,7 +1,10 @@
 #pragma once
 
 #include "DisplayWin32.h"
+#include "GameComponent.h"
+#include "TriangleComponent.h"
 #include "windows.h"
+#include <vector>
 #include <wrl.h>
 #include <chrono>
 #include <d3d.h>
@@ -28,6 +31,7 @@ private:
 	float totalTime = 0;
 	unsigned int frameCount = 0;
 public:
+	std::vector <GameComponent> Components; // вектор компонент (акторов)
 	ID3D11DeviceContext* context; // структура, содержащая сведения об атрибутах рисования устройства, таких как экран или принтер
 	// Все вызовы рисования выполняются через объект контекста устройства, который инкапсулирует интерфейсы.
 	IDXGISwapChain* swapChain; // свапчейн (цепочка подкачки)
@@ -36,7 +40,8 @@ public:
 	// Позволяет переходить к интересующим частям временной шкалы или понимать, какой набор вызовов Direct3D производится какими разделами кода приложения
 	DisplayWin32 Display;
 	Microsoft::WRL::ComPtr<ID3D11Device> device;
-	int Initialize();
+	int Run();
+	void Initialize();
 	void DestroyResources();
 	void Draw();
 };
