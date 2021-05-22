@@ -27,9 +27,6 @@
     <ClCompile Include="Game.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="GameComponent.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="TriangleComponent.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>

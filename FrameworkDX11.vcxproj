@@ -141,7 +141,6 @@
   <ItemGroup>
     <ClCompile Include="DisplayWin32.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="GameComponent.cpp" />
     <ClCompile Include="InputDevice.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="TriangleComponent.cpp" />
@@ -149,6 +148,7 @@
   <ItemGroup>
     <FxCompile Include="MiniTri.fx">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">VSMain</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VSMain</EntryPointName>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>

@@ -5,7 +5,10 @@
 
 int main() {
 	Game test;
-	test.Run();
+	int res;
+	res = test.Run();
+	if (res == 1)
+		std::cout << "Error";
 	MSG msg = {};
 	bool isExitRequested = false;
 	while (!isExitRequested) { // ÷икл до сообщени€ о выходе от окна или пользовател€
