@@ -18,11 +18,12 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
 
+using namespace DirectX;
+
 class GameComponent {
 public:
-	virtual void Initialize() {};
+	virtual int PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) { return 0; };
+	virtual void DestroyResourses() {};
 	virtual void Update() {};
 	virtual void Draw(ID3D11DeviceContext* context) {};
-	int PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) { return 0; };
-	virtual void DestroyResourses() {};
 };
