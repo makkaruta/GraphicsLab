@@ -11,6 +11,7 @@ void Game::Run() {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) { // Неблокирующий ввод
 			TranslateMessage(&msg); // Перевод нажатия клавиш в символы
 			DispatchMessage(&msg); // Обработка сообщения
+			std::cout << msg.message << std::endl;
 		}
 		if (msg.message == WM_QUIT) { // Если было получено сообщение о выходе, в цикл больше входить не надо
 			isExitRequested = true;
@@ -133,7 +134,7 @@ void Game::PrepareFrame() {
 		SetWindowText(Display.get_hWnd(), text);
 		frameCount = 0;
 	}
-
+	context->ClearState();
 	float color[] = { totalTime, 0.1f, 0.1f, 1.0f };
 	context->OMSetRenderTargets(1, &rtv, nullptr); // привязка рендер таргета к заднему буферу, последний параметр - глубина привязки
 	context->ClearRenderTargetView(rtv, color);
