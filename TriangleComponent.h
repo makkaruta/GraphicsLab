@@ -2,7 +2,6 @@
 
 #include "GameComponent.h"
 
-//#define ZCHECK(exp) if(FAILED(exp)) { printf("Check failed at file: %s at line %i", __FILE__, __LINE__); return 0; }
 #define NOTHING_TO_DRAW -1
 #define SUCCESS 0
 #define ERROR_VBC 1

@@ -1,8 +1,5 @@
-//#include "pch.h"
+#include "pch.h"
 #include "InputDevice.h"
-#include <iostream>
-#include "Game.h"
-
 
 using namespace DirectX::SimpleMath;
 

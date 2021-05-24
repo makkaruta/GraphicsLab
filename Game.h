@@ -1,13 +1,10 @@
 #pragma once
 
+#include "pch.h"
+
 #include "DisplayWin32.h"
 #include "GameComponent.h"
 #include "TriangleComponent.h"
-#include "windows.h"
-#include <vector>
-#include <wrl.h>
-#include <chrono>
-#include <iostream>
 
 #define ERROR_DEV_SC 12
 #define ERROR_SCBUF 13
