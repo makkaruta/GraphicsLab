@@ -1,8 +1,10 @@
+#include "pch.h"
 #include "Game.h"
 
 void Game::Run() {
 	Initialize();
-	Display.CreateDisplay();
+	Display.CreateDisplay(&inputDevice);
+	inputDevice.Initialize(Display.get_hWnd());
 	ErrorsOutput(PrepareResources());
 
 	MSG msg = {};
@@ -11,7 +13,7 @@ void Game::Run() {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) { // Неблокирующий ввод
 			TranslateMessage(&msg); // Перевод нажатия клавиш в символы
 			DispatchMessage(&msg); // Обработка сообщения
-			std::cout << msg.message << std::endl;
+			//std::cout << msg.message << std::endl;
 		}
 		if (msg.message == WM_QUIT) { // Если было получено сообщение о выходе, в цикл больше входить не надо
 			isExitRequested = true;

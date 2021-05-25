@@ -23,6 +23,7 @@ private:
 	ID3DUserDefinedAnnotation* annotation; // Описание концептуальных разделов и маркеров в потоке кода приложения
 	// Позволяет переходить к интересующим частям временной шкалы или понимать, какой набор вызовов Direct3D производится какими разделами кода приложения
 	ID3D11Debug* debug; // Интерфейс отладки управляет настройками отладки и проверяет состояние конвейера
+	InputDevice inputDevice;
 
 	std::chrono::time_point<std::chrono::steady_clock> prevTime;
 	float totalTime = 0;

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "pch.h"
+#include "Keys.h"
+#include "InputDevice.h"
 
 class DisplayWin32 {
 private:
@@ -16,5 +18,5 @@ public:
 	HWND get_hWnd() { return hWnd; };
 	int get_screenWidth() { return screenWidth; };
 	int get_screenHeight() { return screenHeight; };
-	void CreateDisplay();
+	void CreateDisplay(InputDevice* iDev);
 };
