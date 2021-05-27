@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "TriangleComponent.h"
 
 TriangleComponent::TriangleComponent() {
@@ -47,7 +48,7 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 
 		D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr }; // (попарно: название, определение)
 		ID3DBlob* errorPixelCode;
-		res = D3DCompileFromFile(L"MiniTri.fx", Shader_Macros, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &pixelBC, &errorPixelCode);
+		res = D3DCompileFromFile(L"MiniTri.fx", nullptr /*Shader_Macros*/, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &pixelBC, &errorPixelCode);
 		if (FAILED(res)) {
 			if (errorPixelCode) {
 				char* compileErrors = (char*)(errorPixelCode->GetBufferPointer());
@@ -153,9 +154,32 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 		CD3D11_RASTERIZER_DESC rastDesc = {}; // дескриптор растеризатора
 		rastDesc.CullMode = D3D11_CULL_NONE; // треугольники, обращенные в указанном направлении, не отображаются (всегда отображаются)
 		rastDesc.FillMode = D3D11_FILL_SOLID; // режим заливки (заполнение)
+		// D3D11_FILL_WIREFRAME - только линии
 		res = device->CreateRasterizerState(&rastDesc, &rastState);
 		if (FAILED(res))
 			return ERROR_CREATING_RASTSTATE;
+
+		D3D11_BLEND_DESC blendStateDesc; // дескриптор смешивания
+		blendStateDesc.AlphaToCoverageEnable = false;
+		blendStateDesc.IndependentBlendEnable = false;
+		blendStateDesc.RenderTarget[0].BlendEnable = true;
+		blendStateDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA; // операция со значением RGB в пиксельном шейдере
+		blendStateDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA; // операция с RGB в целевом объекте рендеринга
+		blendStateDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD; // определяет, как комбинировать операции SrcBlend и DestBlend
+		blendStateDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE; // операция со значением альфа в пиксельном шейдере
+		blendStateDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO; // операция со значением альфа в целевом объекте рендеринга
+		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD; // определяет, как комбинировать операции SrcBlendAlpha и DestBlendAlpha
+		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+		res = device->CreateBlendState(&blendStateDesc, &blend); if (FAILED(res))
+			return ERROR_CREATING_BLENDSTATE;
+		
+		blendFactor[0] = 0;
+		blendFactor[1] = 0;
+		blendFactor[2] = 0;
+		blendFactor[3] = 0;
+		sampleMask = 0xffffffff;
+
 		return SUCCESS;
 	}
 	return NOTHING_TO_DRAW;
@@ -188,8 +212,9 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context) {
 		context->VSSetShader(vertexShader, nullptr, 0);
 		context->PSSetShader(pixelShader, nullptr, 0);
 		context->RSSetState(rastState);
+		context->OMSetBlendState(blend, blendFactor, sampleMask);
 		context->DrawIndexed(
-			6, // количество отрисовываемых индексов из буфера индексов
+			parameters.numIndeces, // количество отрисовываемых индексов из буфера индексов
 			0, // первый индекс для отрисовки
 			0);// значение, добавляемое к каждому индексу перед чтением вершины из буфера вершин
 	}

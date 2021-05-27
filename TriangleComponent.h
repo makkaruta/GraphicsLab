@@ -1,5 +1,7 @@
 #pragma once
 
+#include "pch.h"
+
 #include "GameComponent.h"
 
 #define NOTHING_TO_DRAW -1
@@ -15,10 +17,11 @@
 #define ERROR_CREATING_COLBUF 9
 #define ERROR_CREATING_INDBUF 10
 #define ERROR_CREATING_RASTSTATE 11
+#define ERROR_CREATING_BLENDSTATE 12
 
 struct TriangleComponentParameters {
-	DirectX::XMFLOAT4 *positions;
-	DirectX::XMFLOAT4 *colors;
+	DirectX::SimpleMath::Vector4 *positions;
+	DirectX::SimpleMath::Vector4 *colors;
 	int *indeces;
 	int numPoints;
 	int numIndeces;
@@ -37,6 +40,9 @@ private:
 	UINT offsets[2]; // смещение от начала для каждого буфера
 	ID3D11Buffer* indBuf;
 	ID3D11RasterizerState* rastState;
+	ID3D11BlendState* blend;
+	float blendFactor[4];
+	UINT sampleMask;
 public:
 	TriangleComponent();
 	TriangleComponent(TriangleComponentParameters param);

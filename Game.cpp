@@ -5,6 +5,7 @@ void Game::Run() {
 	Initialize();
 	Display.CreateDisplay(&inputDevice);
 	inputDevice.Initialize(Display.get_hWnd());
+	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight());
 	ErrorsOutput(PrepareResources());
 
 	MSG msg = {};
@@ -27,25 +28,39 @@ void Game::Run() {
 
 void Game::Initialize() {
 	TriangleComponentParameters temp;
-	temp.positions = new DirectX::XMFLOAT4[4];
-	temp.positions[0] = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-	temp.positions[1] = XMFLOAT4(-0.5f, -0.5f, 0.5f, 1.0f);
-	temp.positions[2] = XMFLOAT4(0.5f, -0.5f, 0.5f, 1.0f);
-	temp.positions[3] = XMFLOAT4(-0.5f, 0.5f, 0.5f, 1.0f);
-	temp.colors = new DirectX::XMFLOAT4[4];
-	temp.colors[0] = XMFLOAT4(1.0f, 0.0f, 0.0f, 1.0f);
-	temp.colors[1] = XMFLOAT4(0.0f, 0.0f, 1.0f, 1.0f);
-	temp.colors[2] = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-	temp.colors[3] = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-	temp.indeces = new int[6];
-	temp.indeces[0] = 0;
+	temp.positions = new DirectX::SimpleMath::Vector4[5];
+	temp.positions[0] = DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.8f, 1.0f);
+	temp.positions[1] = DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.8f, 1.0f);
+	temp.positions[2] = DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.4f, 1.0f);
+	temp.positions[3] = DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.4f, 1.0f);
+	temp.positions[4] = DirectX::SimpleMath::Vector4(0.0f, 0.5f, 0.6f, 1.0f);
+	temp.colors = new DirectX::SimpleMath::Vector4[5];
+	temp.colors[0] = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 0.5f);
+	temp.colors[1] = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 0.5f);
+	temp.colors[2] = DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 0.5f);
+	temp.colors[3] = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 0.5f);
+	temp.colors[4] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 0.5f);
+	temp.indeces = new int[18];
+	temp.indeces[0] = 0; // 1 часть основания
 	temp.indeces[1] = 1;
 	temp.indeces[2] = 2;
-	temp.indeces[3] = 1;
-	temp.indeces[4] = 0;
-	temp.indeces[5] = 3;
-	temp.numPoints = 4;
-	temp.numIndeces = 6;
+	temp.indeces[3] = 2; // 2 часть основания
+	temp.indeces[4] = 3;
+	temp.indeces[5] = 0;
+	temp.indeces[6] = 0; // 1 боковая грань
+	temp.indeces[7] = 1;
+	temp.indeces[8] = 4;
+	temp.indeces[9] = 1; // 2 боковая грань
+	temp.indeces[10] = 2;
+	temp.indeces[11] = 4;
+	temp.indeces[12] = 2; // 3 боковая грань
+	temp.indeces[13] = 3; 
+	temp.indeces[14] = 4;
+	temp.indeces[15] = 3; // 4 боковая грань
+	temp.indeces[16] = 0;
+	temp.indeces[17] = 4;
+	temp.numPoints = 5;
+	temp.numIndeces = 18;
 	Components.push_back(new TriangleComponent(temp));
 }
 
@@ -137,7 +152,8 @@ void Game::PrepareFrame() {
 		frameCount = 0;
 	}
 	context->ClearState();
-	float color[] = { totalTime, 0.1f, 0.1f, 1.0f };
+	//float color[] = { totalTime, 0.1f, 0.1f, 1.0f };
+	float color[] = { 0.2f, 0.2f, 0.2f, 0.5f };
 	context->OMSetRenderTargets(1, &rtv, nullptr); // привязка рендер таргета к заднему буферу, последний параметр - глубина привязки
 	context->ClearRenderTargetView(rtv, color);
 	context->RSSetViewports(1, &viewport); // первый параметр - количество окон
@@ -192,6 +208,9 @@ void Game::ErrorsOutput(int ErrorCode) {
 		break;
 	case ERROR_CREATING_RASTSTATE:
 		std::cout << "Error creating Rasterizer State";
+		break;
+	case ERROR_CREATING_BLENDSTATE:
+		std::cout << "Error creating Blend State";
 		break;
 	case ERROR_DEV_SC:
 		std::cout << "Error creating Device and SwapChain";

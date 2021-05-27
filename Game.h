@@ -3,12 +3,13 @@
 #include "pch.h"
 
 #include "DisplayWin32.h"
+#include "Camera.h"
 #include "GameComponent.h"
 #include "TriangleComponent.h"
 
-#define ERROR_DEV_SC 12
-#define ERROR_SCBUF 13
-#define ERROR_RTV 14
+#define ERROR_DEV_SC 13
+#define ERROR_SCBUF 14
+#define ERROR_RTV 15
 
 class Game {
 private:
@@ -24,6 +25,7 @@ private:
 	// Позволяет переходить к интересующим частям временной шкалы или понимать, какой набор вызовов Direct3D производится какими разделами кода приложения
 	ID3D11Debug* debug; // Интерфейс отладки управляет настройками отладки и проверяет состояние конвейера
 	InputDevice inputDevice;
+	Camera camera;
 
 	std::chrono::time_point<std::chrono::steady_clock> prevTime;
 	float totalTime = 0;
