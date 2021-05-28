@@ -16,8 +16,9 @@
 #define ERROR_CREATING_POSBUF 8
 #define ERROR_CREATING_COLBUF 9
 #define ERROR_CREATING_INDBUF 10
-#define ERROR_CREATING_RASTSTATE 11
-#define ERROR_CREATING_BLENDSTATE 12
+#define ERROR_CREATING_BLENDSTATE 11
+#define ERROR_CREATING_CONSTBUF 12
+#define ERROR_CREATING_RASTSTATE 13
 
 struct TriangleComponentParameters {
 	DirectX::SimpleMath::Vector4 *positions;
@@ -39,15 +40,17 @@ private:
 	UINT strides[2]; // шаг вершин для каждого буфера
 	UINT offsets[2]; // смещение от начала для каждого буфера
 	ID3D11Buffer* indBuf;
-	ID3D11RasterizerState* rastState;
 	ID3D11BlendState* blend;
+	ID3D11Buffer* constBuf;
+	ID3D11RasterizerState* rastState;
 	float blendFactor[4];
 	UINT sampleMask;
 public:
+	DirectX::SimpleMath::Vector3 compPosition;
 	TriangleComponent();
 	TriangleComponent(TriangleComponentParameters param);
 	int PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	void DestroyResourses();
-	void Update();
+	void Update(ID3D11DeviceContext* context, Camera* camera);
 	void Draw(ID3D11DeviceContext* context);
 };

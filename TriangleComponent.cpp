@@ -9,6 +9,7 @@ TriangleComponent::TriangleComponent() {
 	parameters.numIndeces = 0;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
+	compPosition = DirectX::SimpleMath::Vector3::Zero;
 }
 
 TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
@@ -19,6 +20,7 @@ TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
 	parameters.numIndeces = param.numIndeces;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
+	compPosition = DirectX::SimpleMath::Vector3::Zero;
 }
 
 int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {
@@ -151,14 +153,6 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 		offsets[0] = 0;
 		offsets[1] = 0;
 
-		CD3D11_RASTERIZER_DESC rastDesc = {}; // дескриптор растеризатора
-		rastDesc.CullMode = D3D11_CULL_NONE; // треугольники, обращенные в указанном направлении, не отображаются (всегда отображаются)
-		rastDesc.FillMode = D3D11_FILL_SOLID; // режим заливки (заполнение)
-		// D3D11_FILL_WIREFRAME - только линии
-		res = device->CreateRasterizerState(&rastDesc, &rastState);
-		if (FAILED(res))
-			return ERROR_CREATING_RASTSTATE;
-
 		D3D11_BLEND_DESC blendStateDesc; // дескриптор смешивания
 		blendStateDesc.AlphaToCoverageEnable = false;
 		blendStateDesc.IndependentBlendEnable = false;
@@ -171,14 +165,35 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD; // определяет, как комбинировать операции SrcBlendAlpha и DestBlendAlpha
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-		res = device->CreateBlendState(&blendStateDesc, &blend); if (FAILED(res))
+		res = device->CreateBlendState(&blendStateDesc, &blend); 
+		if (FAILED(res))
 			return ERROR_CREATING_BLENDSTATE;
-		
+
 		blendFactor[0] = 0;
 		blendFactor[1] = 0;
 		blendFactor[2] = 0;
 		blendFactor[3] = 0;
 		sampleMask = 0xffffffff;
+
+
+		D3D11_BUFFER_DESC constBufDesc = {};
+		constBufDesc.Usage = D3D11_USAGE_DYNAMIC; // ресурс, доступный как для GPU (только для чтения), так и для CPU (только для записи)
+		constBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER; // привязка буфера в качестве константного
+		constBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // доступ для записи
+		constBufDesc.MiscFlags = 0;
+		constBufDesc.StructureByteStride = 0; // размер каждого элемента в структуре буфера
+		constBufDesc.ByteWidth = sizeof(DirectX::SimpleMath::Matrix);
+		res = device->CreateBuffer(&constBufDesc, nullptr, &constBuf);
+		if (FAILED(res))
+			return ERROR_CREATING_CONSTBUF;
+
+		CD3D11_RASTERIZER_DESC rastDesc = {}; // дескриптор растеризатора
+		rastDesc.CullMode = D3D11_CULL_NONE; // треугольники, обращенные в указанном направлении, не отображаются (всегда отображаются)
+		rastDesc.FillMode = D3D11_FILL_SOLID; // режим заливки (заполнение)
+		// D3D11_FILL_WIREFRAME - только линии
+		res = device->CreateRasterizerState(&rastDesc, &rastState);
+		if (FAILED(res))
+			return ERROR_CREATING_RASTSTATE;
 
 		return SUCCESS;
 	}
@@ -192,8 +207,24 @@ void TriangleComponent::DestroyResourses() {
 		pixelShader->Release();
 }
 
-void TriangleComponent::Update() {
+void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
+	auto proj = DirectX::SimpleMath::Matrix::CreateTranslation(compPosition) * camera->ViewMatrix * camera->ProjectionMatrix; // получение проекции
+	proj = proj.Transpose();
 
+	D3D11_MAPPED_SUBRESOURCE subresourse = {};
+	context->Map( // получение указателя на ресурс и запрет доступа GPU к этому ресурсу
+		constBuf,
+		0,  // номер подресурса
+		D3D11_MAP_WRITE_DISCARD, // получение ресурса для записи
+		0, // D3D11_MAP_FLAG_DO_NOT_WAIT
+		&subresourse);
+
+	memcpy(
+		reinterpret_cast<float*>(subresourse.pData), // куда
+		&proj, // откуда
+		sizeof(DirectX::SimpleMath::Matrix)); // сколько байт
+
+	context->Unmap(constBuf, 0); // вернуть доступ GPU
 }
 
 void TriangleComponent::Draw(ID3D11DeviceContext* context) {
@@ -207,12 +238,13 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context) {
 			0, // первый слот
 			2, // количество буферов
 			vBuffers, // буферы вершин
-			strides,
-			offsets);
+			strides, // шаг вершин для каждого буфера
+			offsets); // смещение от начала для каждого буфера
 		context->VSSetShader(vertexShader, nullptr, 0);
 		context->PSSetShader(pixelShader, nullptr, 0);
-		context->RSSetState(rastState);
 		context->OMSetBlendState(blend, blendFactor, sampleMask);
+		context->VSSetConstantBuffers(0, 1, &constBuf);
+		context->RSSetState(rastState);
 		context->DrawIndexed(
 			parameters.numIndeces, // количество отрисовываемых индексов из буфера индексов
 			0, // первый индекс для отрисовки

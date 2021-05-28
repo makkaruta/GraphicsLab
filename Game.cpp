@@ -5,7 +5,8 @@ void Game::Run() {
 	Initialize();
 	Display.CreateDisplay(&inputDevice);
 	inputDevice.Initialize(Display.get_hWnd());
-	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight());
+	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight(), &inputDevice);
+	//std::cout << "Width: " << Display.get_screenWidth() << " Height: " << Display.get_screenHeight() << std::endl;
 	ErrorsOutput(PrepareResources());
 
 	MSG msg = {};
@@ -20,6 +21,7 @@ void Game::Run() {
 			isExitRequested = true;
 		}
 		PrepareFrame();
+		Update();
 		Draw();
 		EndFrame();
 	}
@@ -139,7 +141,7 @@ void Game::DestroyResources() {
 
 void Game::PrepareFrame() {
 	auto curTime = std::chrono::steady_clock::now();
-	float deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(curTime - prevTime).count() / 1000000.0f;
+	deltaTime = std::chrono::duration_cast<std::chrono::microseconds>(curTime - prevTime).count() / 1000000.0f;
 	prevTime = curTime;
 	totalTime += deltaTime;
 	frameCount++;
@@ -164,7 +166,14 @@ void Game::EndFrame() {
 }
 
 void Game::Update() {
+	annotation->BeginEvent(L"BeginUpdate");
+	camera.OnMouseMove(inputDevice.getMouseParam());
 
+	//std::cout << "Width: " << Display.get_screenWidth() << " Height: " << Display.get_screenHeight() << std::endl;
+	camera.Update(deltaTime, Display.get_screenWidth(), Display.get_screenHeight());
+	for (int i = 0; i < Components.size(); i++)
+		Components[i]->Update(context, &camera); 
+	annotation->EndEvent();
 }
 
 void Game::Draw() {
@@ -177,54 +186,57 @@ void Game::Draw() {
 void Game::ErrorsOutput(int ErrorCode) {
 	switch (ErrorCode) {
 	case ERROR_VBC:
-		std::cout << "Error compiling Vertex Byte Code";
+		std::cout << "Error compiling Vertex Byte Code" << std::endl;
 		break;
 	case MISSING_VS:
-		std::cout << "Missing Vertex Shader file";
+		std::cout << "Missing Vertex Shader file" << std::endl;
 		break;
 	case ERROR_PBC:
-		std::cout << "Error compiling Pixel Byte Code";
+		std::cout << "Error compiling Pixel Byte Code" << std::endl;
 		break;
 	case MISSING_PS:
-		std::cout << "Missing Pixel Shader file";
+		std::cout << "Missing Pixel Shader file" << std::endl;
 		break;
 	case ERROR_CREATING_VS:
-		std::cout << "Error creating Vertex Shader";
+		std::cout << "Error creating Vertex Shader" << std::endl;
 		break;
 	case ERROR_CREATING_PS:
-		std::cout << "Error creating Pixel Shader";
+		std::cout << "Error creating Pixel Shader" << std::endl;
 		break;
 	case ERROR_CREATING_LAYOUT:
-		std::cout << "Error creating Layout";
+		std::cout << "Error creating Layout" << std::endl;
 		break;
 	case ERROR_CREATING_POSBUF:
-		std::cout << "Error creating Position Buffer";
+		std::cout << "Error creating Position Buffer" << std::endl;
 		break;
 	case ERROR_CREATING_COLBUF:
-		std::cout << "Error creating Color Buffer";
+		std::cout << "Error creating Color Buffer" << std::endl;
 		break;
 	case ERROR_CREATING_INDBUF:
-		std::cout << "Error creating Index Buffer";
-		break;
-	case ERROR_CREATING_RASTSTATE:
-		std::cout << "Error creating Rasterizer State";
+		std::cout << "Error creating Index Buffer" << std::endl;
 		break;
 	case ERROR_CREATING_BLENDSTATE:
-		std::cout << "Error creating Blend State";
+		std::cout << "Error creating Blend State" << std::endl;
+		break;
+	case ERROR_CREATING_CONSTBUF:
+		std::cout << "Error creating Constant Bufer" << std::endl;
+		break;
+	case ERROR_CREATING_RASTSTATE:
+		std::cout << "Error creating Rasterizer State" << std::endl;
 		break;
 	case ERROR_DEV_SC:
-		std::cout << "Error creating Device and SwapChain";
+		std::cout << "Error creating Device and SwapChain" << std::endl;
 		break;
 	case ERROR_SCBUF:
-		std::cout << "Error SwapChain get buffer";
+		std::cout << "Error SwapChain get buffer" << std::endl;
 		break;
 	case ERROR_RTV:
-		std::cout << "Error creating RenderTargetView";
+		std::cout << "Error creating RenderTargetView" << std::endl;
 		break;
 	case SUCCESS:
 		break;
 	default:
-		std::cout << "Unidentified error";
+		std::cout << "Unidentified error" << std::endl;
 		break;
 	}
 }

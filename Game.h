@@ -3,13 +3,13 @@
 #include "pch.h"
 
 #include "DisplayWin32.h"
-#include "Camera.h"
+//#include "Camera.h"
 #include "GameComponent.h"
 #include "TriangleComponent.h"
 
-#define ERROR_DEV_SC 13
-#define ERROR_SCBUF 14
-#define ERROR_RTV 15
+#define ERROR_DEV_SC 14
+#define ERROR_SCBUF 15
+#define ERROR_RTV 16
 
 class Game {
 private:
@@ -28,6 +28,7 @@ private:
 	Camera camera;
 
 	std::chrono::time_point<std::chrono::steady_clock> prevTime;
+	float deltaTime;
 	float totalTime = 0;
 	unsigned int frameCount = 0;
 	
