@@ -18,6 +18,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 		return 0;
 	case WM_SIZE: // изменение размера окна
 		//std::cout << "Width: " << LOWORD(lparam) << ", Height: " << HIWORD(lparam) << std::endl;
+		((InputDevice*)GetWindowLongPtr(hwnd, DWLP_USER))->OnChangeScreenSize(LOWORD(lparam), HIWORD(lparam));
 		return 0;
 	case WM_KEYDOWN: // нажатие клавиши
 		if (static_cast<unsigned int>(wparam) == (unsigned int)Keys::Escape)

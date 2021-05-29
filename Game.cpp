@@ -30,41 +30,51 @@ void Game::Run() {
 }
 
 void Game::Initialize() {
-	TriangleComponentParameters temp;
-	temp.positions = new DirectX::SimpleMath::Vector4[5];
-	temp.positions[0] = DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.8f, 1.0f);
-	temp.positions[1] = DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.8f, 1.0f);
-	temp.positions[2] = DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.4f, 1.0f);
-	temp.positions[3] = DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.4f, 1.0f);
-	temp.positions[4] = DirectX::SimpleMath::Vector4(0.0f, 0.5f, 0.6f, 1.0f);
-	temp.colors = new DirectX::SimpleMath::Vector4[5];
-	temp.colors[0] = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 0.5f);
-	temp.colors[1] = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 0.5f);
-	temp.colors[2] = DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 0.5f);
-	temp.colors[3] = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 0.5f);
-	temp.colors[4] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 0.5f);
-	temp.indeces = new int[18];
-	temp.indeces[0] = 0; // 1 часть основания
-	temp.indeces[1] = 1;
-	temp.indeces[2] = 2;
-	temp.indeces[3] = 2; // 2 часть основания
-	temp.indeces[4] = 3;
-	temp.indeces[5] = 0;
-	temp.indeces[6] = 0; // 1 боковая грань
-	temp.indeces[7] = 1;
-	temp.indeces[8] = 4;
-	temp.indeces[9] = 1; // 2 боковая грань
-	temp.indeces[10] = 2;
-	temp.indeces[11] = 4;
-	temp.indeces[12] = 2; // 3 боковая грань
-	temp.indeces[13] = 3; 
-	temp.indeces[14] = 4;
-	temp.indeces[15] = 3; // 4 боковая грань
-	temp.indeces[16] = 0;
-	temp.indeces[17] = 4;
-	temp.numPoints = 5;
-	temp.numIndeces = 18;
-	Components.push_back(new TriangleComponent(temp));
+	TriangleComponentParameters pyramid;
+	pyramid.positions = new DirectX::SimpleMath::Vector4[]{
+	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.8f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.8f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.4f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.4f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.5f, 0.6f, 1.0f)};
+	pyramid.colors = new DirectX::SimpleMath::Vector4[]{
+	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f)};
+	pyramid.indeces = new int[] {
+		0, 1, 2, // 1 часть основания
+		2, 3, 0, // 2 часть основания
+		0, 1, 4, // 1 боковая грань
+		1, 2, 4, // 2 боковая грань
+		2, 3, 4, // 3 боковая грань
+		3, 0, 4}; // 4 боковая грань
+	pyramid.numPoints = 5;
+	pyramid.numIndeces = 18;
+	Components.push_back(new TriangleComponent(pyramid));
+	LineComponentParameters grid;
+	int numDots = 200;
+	float density = 2.0f;
+	float offsetX = (((float)numDots) / (density)) / 1.35f;
+	float offsetY = 5.0f;
+	float distance = 100.0f;
+	grid.positions = new DirectX::SimpleMath::Vector4[numDots];
+	for (int i = 0; i < numDots/2; i += 2)
+	{
+		grid.positions[i] = DirectX::SimpleMath::Vector4(-distance, 0.0f, offsetY - ((float)i) / density, 1.0f);
+		grid.positions[i+1] = DirectX::SimpleMath::Vector4(distance, 0.0f, offsetY - ((float)i) / density, 1.0f);
+	}
+	for (int i = numDots/2; i < numDots; i += 2)
+	{
+		grid.positions[i] = DirectX::SimpleMath::Vector4(offsetX - ((float)i) / density, 0.0f, -distance, 1.0f);
+		grid.positions[i+1] = DirectX::SimpleMath::Vector4(offsetX - ((float)i) / density, 0.0f, distance, 1.0f);
+	}
+	grid.colors = new DirectX::SimpleMath::Vector4[numDots];
+	for (int i = 0; i < numDots; i++)
+		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	grid.numPoints = numDots;
+	Components.push_back(new LineComponent(grid));
 }
 
 int Game::PrepareResources() {
@@ -138,6 +148,19 @@ void Game::DestroyResources() {
 		Components[i]->DestroyResourses();
 	device->Release();
 	debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
+
+	/*
+	if (Context) Context->ClearState();
+	if (_constantBuffer) _constantBuffer->Release();
+	if (_vertexBuffer) _vertexBuffer->Release();
+	if (_indexBuffer) _indexBuffer->Release();
+	for (auto c : Components)
+	{
+		c->DestroyResources();
+	}
+	if (RenderView) RenderView->Release();
+	if (Context) Context->Release();
+	if (Device) Device->Release();*/
 }
 
 void Game::PrepareFrame() {
@@ -168,9 +191,7 @@ void Game::EndFrame() {
 
 void Game::Update() {
 	annotation->BeginEvent(L"BeginUpdate");
-	camera.OnMouseMove(inputDevice.getMouseParam());
-
-	//std::cout << "Width: " << Display.get_screenWidth() << " Height: " << Display.get_screenHeight() << std::endl;
+	std::cout << "Width: " << Display.get_screenWidth() << " Height: " << Display.get_screenHeight() << std::endl;
 	camera.Update(deltaTime, Display.get_screenWidth(), Display.get_screenHeight());
 	for (int i = 0; i < Components.size(); i++)
 		Components[i]->Update(context, &camera); 

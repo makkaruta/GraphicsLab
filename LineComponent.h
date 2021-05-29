@@ -4,17 +4,16 @@
 
 #include "GameComponent.h"
 
-struct TriangleComponentParameters {
-	DirectX::SimpleMath::Vector4 *positions;
-	DirectX::SimpleMath::Vector4 *colors;
-	int *indeces;
+
+struct LineComponentParameters {
+	DirectX::SimpleMath::Vector4* positions;
+	DirectX::SimpleMath::Vector4* colors;
 	int numPoints;
-	int numIndeces;
 };
 
-class TriangleComponent : public GameComponent {
+class LineComponent : public GameComponent {
 private:
-	TriangleComponentParameters parameters;
+	LineComponentParameters parameters;
 	ID3DBlob* vertexBC; // вертекс байт код, результат компил€ции текстового файла с вертексным шейдером
 	ID3DBlob* pixelBC; // пиксель байт код, результат компил€ции текстового файла с пиксельным шейдером
 	ID3D11VertexShader* vertexShader;
@@ -31,8 +30,8 @@ private:
 	UINT sampleMask;
 public:
 	DirectX::SimpleMath::Vector3 compPosition;
-	TriangleComponent();
-	TriangleComponent(TriangleComponentParameters param);
+	LineComponent();
+	LineComponent(LineComponentParameters param);
 	int PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device);
 	void DestroyResourses();
 	void Update(ID3D11DeviceContext* context, Camera* camera);

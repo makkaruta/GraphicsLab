@@ -6,6 +6,7 @@
 //#include "Camera.h"
 #include "GameComponent.h"
 #include "TriangleComponent.h"
+#include "LineComponent.h"
 
 #define ERROR_DEV_SC 14
 #define ERROR_SCBUF 15

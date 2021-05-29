@@ -18,5 +18,5 @@ public:
 
 	void Initialize(int screenWidth, int screenHeight, InputDevice* inpDev);
 	void Update(float deltaTime, int screenWidth, int screenHeight);
-	void OnMouseMove(MouseMoveEventArgs args);
+	void OnMouseMove(const MouseMoveEventArgs& args);
 };

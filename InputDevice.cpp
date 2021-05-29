@@ -84,14 +84,18 @@ void InputDevice::OnMouseMove(RawMouseEventArgs args) {
 
 	MouseParam.Offset = Vector2(Vector2(args.X, args.Y) - MouseParam.Position);
 	MouseParam.Position = Vector2(args.X, args.Y);
-
 	/*POINT p;
 	GetCursorPos(&p);
 	ScreenToClient(hWnd, &p);
 	MouseParam.Position = Vector2(p.x, p.y);
 	MouseParam.Offset = Vector2(args.X, args.Y);*/
 	MouseParam.WheelDelta = args.WheelDelta;
+	MouseMove.Broadcast(MouseParam);
 }
+
+void InputDevice::OnChangeScreenSize(int width, int height) {
+	//
+};
 
 void InputDevice::AddPressedKey(Keys key) {
 	if (!keys->count(key))

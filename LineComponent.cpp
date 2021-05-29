@@ -1,30 +1,27 @@
 #include "pch.h"
-#include "TriangleComponent.h"
+#include "LineComponent.h"
 
-TriangleComponent::TriangleComponent() {
+
+LineComponent::LineComponent() {
 	parameters.positions = nullptr;
 	parameters.colors = nullptr;
-	parameters.indeces = nullptr;
 	parameters.numPoints = 0;
-	parameters.numIndeces = 0;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
-	compPosition = DirectX::SimpleMath::Vector3(0, 0.5 ,0);
+	compPosition = DirectX::SimpleMath::Vector3::Zero;
 }
 
-TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
+LineComponent::LineComponent(LineComponentParameters param) {
 	parameters.positions = param.positions;
 	parameters.colors = param.colors;
-	parameters.indeces = param.indeces;
 	parameters.numPoints = param.numPoints;
-	parameters.numIndeces = param.numIndeces;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
-	compPosition = DirectX::SimpleMath::Vector3(0, 0.5, 0);
+	compPosition = DirectX::SimpleMath::Vector3::Zero;
 }
 
-int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {
-	if (parameters.numIndeces != 0)
+int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {
+	if (parameters.numPoints != 0)
 	{
 		HRESULT res;
 		ID3DBlob* errorVertexCode; // сообщения об ошибках
@@ -129,23 +126,6 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 		if (FAILED(res))
 			return ERROR_CREATING_COLBUF;
 
-		D3D11_BUFFER_DESC indexBufDesc = {};
-		indexBufDesc.Usage = D3D11_USAGE_DEFAULT;
-		indexBufDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		indexBufDesc.CPUAccessFlags = 0;
-		indexBufDesc.MiscFlags = 0;
-		indexBufDesc.StructureByteStride = 0;
-		indexBufDesc.ByteWidth = sizeof(int) * parameters.numIndeces;
-
-		D3D11_SUBRESOURCE_DATA indexData = {};
-		indexData.pSysMem = parameters.indeces;
-		indexData.SysMemPitch = 0;
-		indexData.SysMemSlicePitch = 0;
-
-		res = device->CreateBuffer(&indexBufDesc, &indexData, &indBuf);
-		if (FAILED(res))
-			return ERROR_CREATING_INDBUF;
-
 		vBuffers[0] = pb;
 		vBuffers[1] = cb;
 		strides[0] = 16;
@@ -165,7 +145,7 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 		blendStateDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD; // определяет, как комбинировать операции SrcBlendAlpha и DestBlendAlpha
 		blendStateDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 
-		res = device->CreateBlendState(&blendStateDesc, &blend); 
+		res = device->CreateBlendState(&blendStateDesc, &blend);
 		if (FAILED(res))
 			return ERROR_CREATING_BLENDSTATE;
 
@@ -174,7 +154,6 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 		blendFactor[2] = 0;
 		blendFactor[3] = 0;
 		sampleMask = 0xffffffff;
-
 
 		D3D11_BUFFER_DESC constBufDesc = {};
 		constBufDesc.Usage = D3D11_USAGE_DYNAMIC; // ресурс, доступный как для GPU (только для чтения), так и для CPU (только для записи)
@@ -200,7 +179,7 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 	return NOTHING_TO_DRAW;
 }
 
-void TriangleComponent::DestroyResourses() {
+void LineComponent::DestroyResourses() {
 	//if (layout) layout->Release();
 	if (vertexShader != nullptr)
 		vertexShader->Release();
@@ -208,7 +187,7 @@ void TriangleComponent::DestroyResourses() {
 		pixelShader->Release();
 }
 
-void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
+void LineComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
 	auto proj = DirectX::SimpleMath::Matrix::CreateTranslation(compPosition) * camera->ViewMatrix * camera->ProjectionMatrix; // получение проекции
 	proj = proj.Transpose();
 
@@ -228,13 +207,12 @@ void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
 	context->Unmap(constBuf, 0); // вернуть доступ GPU
 }
 
-void TriangleComponent::Draw(ID3D11DeviceContext* context) {
-	if (parameters.numIndeces != 0)
+void LineComponent::Draw(ID3D11DeviceContext* context) {
+	if (parameters.numPoints != 0)
 	{
 		context->IASetInputLayout(layout);
-		context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // список треугольников: задаются вершины каждого треугольника
+		context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // список треугольников: задаются вершины каждого треугольника
 		// другой вид - лента треугольников (STRIP), когда отрисовка происходит по индексам 0-1-2, 1-2-3, 2-3-4
-		context->IASetIndexBuffer(indBuf, DXGI_FORMAT_R32_UINT, 0);
 		context->IASetVertexBuffers(
 			0, // первый слот
 			2, // количество буферов
@@ -246,9 +224,8 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context) {
 		context->OMSetBlendState(blend, blendFactor, sampleMask);
 		context->VSSetConstantBuffers(0, 1, &constBuf);
 		context->RSSetState(rastState);
-		context->DrawIndexed(
-			parameters.numIndeces, // количество отрисовываемых индексов из буфера индексов
-			0, // первый индекс для отрисовки
-			0);// значение, добавляемое к каждому индексу перед чтением вершины из буфера вершин
+		context->Draw(
+			parameters.numPoints, // количество точек в вертексном буфере
+			0); // первый индекс для отрисовки
 	}
 }

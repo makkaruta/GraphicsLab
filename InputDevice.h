@@ -4,6 +4,7 @@
 
 #include <unordered_set>
 #include "Keys.h"
+#include "Delegates.h"
 
 struct MouseMoveEventArgs
 {
@@ -60,7 +61,9 @@ public:
 	void Initialize(HWND handle);
 	void OnKeyDown(KeyboardInputEventArgs args);
 	void OnMouseMove(RawMouseEventArgs args);
+	void OnChangeScreenSize(int width, int height);
 	bool IsKeyDown(Keys key);
 	MouseMoveEventArgs getMouseParam() { return MouseParam; };
+	MulticastDelegate<const MouseMoveEventArgs&> MouseMove;
 };
 

@@ -11,13 +11,14 @@ void Camera::Initialize(int screenWidth, int screenHeight, InputDevice* inpDev) 
 		(float)screenWidth / screenHeight, // соотношение сторон изображения(ширина / высота)
 		0.1f, // расстояние до ближней плоскости отсечки
 		10000.0f); // расстояние до дальней плоскости отсечки
-	Yaw = 0;
-	Pitch = 0;
-	position = {1, 1, 1};
+	Yaw = 1.57/2;
+	Pitch = 1.57/2;
+	position = {0, 0.5, 2};
+	inputDevice->MouseMove.AddRaw(this, &Camera::OnMouseMove);
 }
 
 void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
-	std::cout << "Yaw: " << Yaw << " Pitch: " << Pitch << std::endl;
+	//std::cout << "Yaw: " << Yaw << " Pitch: " << Pitch << std::endl;
 	auto rotation = DirectX::SimpleMath::Matrix::CreateFromYawPitchRoll(Yaw, Pitch, 0);
 	auto velDirection = DirectX::SimpleMath::Vector3::Zero;
 	if (inputDevice->IsKeyDown(Keys::W)) velDirection += DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f);
@@ -44,10 +45,8 @@ void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
 		10000.0f); // расстояние до дальней плоскости отсечки
 }
 
-void Camera::OnMouseMove(MouseMoveEventArgs args) {
+void Camera::OnMouseMove(const MouseMoveEventArgs& args) {
 	if (inputDevice->IsKeyDown(Keys::LeftShift)) return;
-
-	std::cout << "X: " << args.Offset.x << " Y: " << args.Offset.y << std::endl;
 
 	Yaw -= args.Offset.x * 0.003f * MouseSensetivity;
 	Pitch -= args.Offset.y * 0.003f * MouseSensetivity;
