@@ -51,10 +51,10 @@ class InputDevice{
 private:
 	HWND hWnd;
 	std::unordered_set<Keys>* keys;
+	MouseMoveEventArgs MouseParam;
 	void AddPressedKey(Keys key);
 	void RemovePressedKey(Keys key);
 public:
-	MouseMoveEventArgs MouseParam;
 	InputDevice();
 	~InputDevice();
 	void Initialize(HWND handle);

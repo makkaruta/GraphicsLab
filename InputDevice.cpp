@@ -82,12 +82,14 @@ void InputDevice::OnMouseMove(RawMouseEventArgs args) {
 	else
 		RemovePressedKey(Keys::MiddleButton);
 
+	MouseParam.Offset = Vector2(Vector2(args.X, args.Y) - MouseParam.Position);
+	MouseParam.Position = Vector2(args.X, args.Y);
 
-	POINT p;
+	/*POINT p;
 	GetCursorPos(&p);
 	ScreenToClient(hWnd, &p);
 	MouseParam.Position = Vector2(p.x, p.y);
-	MouseParam.Offset = Vector2(args.X, args.Y);
+	MouseParam.Offset = Vector2(args.X, args.Y);*/
 	MouseParam.WheelDelta = args.WheelDelta;
 }
 

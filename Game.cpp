@@ -12,6 +12,7 @@ void Game::Run() {
 	MSG msg = {};
 	bool isExitRequested = false;
 	while (!isExitRequested) { // Цикл до сообщения о выходе от окна или пользователя
+		//inputDevice.MouseParam
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) { // Неблокирующий ввод
 			TranslateMessage(&msg); // Перевод нажатия клавиш в символы
 			DispatchMessage(&msg); // Обработка сообщения

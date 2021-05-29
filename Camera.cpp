@@ -17,7 +17,7 @@ void Camera::Initialize(int screenWidth, int screenHeight, InputDevice* inpDev) 
 }
 
 void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
-	//std::cout << "Yaw: " << Yaw << " Pitch: " << Pitch << std::endl;
+	std::cout << "Yaw: " << Yaw << " Pitch: " << Pitch << std::endl;
 	auto rotation = DirectX::SimpleMath::Matrix::CreateFromYawPitchRoll(Yaw, Pitch, 0);
 	auto velDirection = DirectX::SimpleMath::Vector3::Zero;
 	if (inputDevice->IsKeyDown(Keys::W)) velDirection += DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f);
@@ -36,8 +36,7 @@ void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
 	}
 	position = position + velDir * VelocityMagnitude * deltaTime;
 	ViewMatrix = DirectX::SimpleMath::Matrix::CreateLookAt(position, position + rotation.Forward(), rotation.Up());
-	std::cout << "Width: " << screenWidth << " Height: " << screenHeight << std::endl;
-	std::cout << ((float)PI / 2.0f)<< std::endl;
+	//std::cout << "Width: " << screenWidth << " Height: " << screenHeight << std::endl;
 	ProjectionMatrix = DirectX::SimpleMath::Matrix::CreatePerspectiveFieldOfView(
 		(float)PI / 2.0f, // угол поля зрения по оси y (в радианах)
 		(float)screenWidth / screenHeight, // соотношение сторон изображения(ширина / высота)
@@ -47,6 +46,8 @@ void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
 
 void Camera::OnMouseMove(MouseMoveEventArgs args) {
 	if (inputDevice->IsKeyDown(Keys::LeftShift)) return;
+
+	std::cout << "X: " << args.Offset.x << " Y: " << args.Offset.y << std::endl;
 
 	Yaw -= args.Offset.x * 0.003f * MouseSensetivity;
 	Pitch -= args.Offset.y * 0.003f * MouseSensetivity;
