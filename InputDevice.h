@@ -48,11 +48,17 @@ enum class MouseButtonFlags
 	None = 0,
 };
 
+struct ScreenSize {
+	int Width;
+	int Height;
+};
+
 class InputDevice{
 private:
 	HWND hWnd;
 	std::unordered_set<Keys>* keys;
 	MouseMoveEventArgs MouseParam;
+	ScreenSize ScreenParam;
 	void AddPressedKey(Keys key);
 	void RemovePressedKey(Keys key);
 public:
@@ -65,5 +71,6 @@ public:
 	bool IsKeyDown(Keys key);
 	MouseMoveEventArgs getMouseParam() { return MouseParam; };
 	MulticastDelegate<const MouseMoveEventArgs&> MouseMove;
+	MulticastDelegate<const ScreenSize&> ChangeScreenSize;
 };
 

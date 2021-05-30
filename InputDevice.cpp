@@ -94,7 +94,9 @@ void InputDevice::OnMouseMove(RawMouseEventArgs args) {
 }
 
 void InputDevice::OnChangeScreenSize(int width, int height) {
-	//
+	ScreenParam.Width = width;
+	ScreenParam.Height = height;
+	ChangeScreenSize.Broadcast(ScreenParam);
 };
 
 void InputDevice::AddPressedKey(Keys key) {

@@ -188,8 +188,12 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 			return ERROR_CREATING_CONSTBUF;
 
 		CD3D11_RASTERIZER_DESC rastDesc = {}; // дескриптор растеризатора
-		rastDesc.CullMode = D3D11_CULL_NONE; // треугольники, обращенные в указанном направлении, не отображаются (всегда отображаются)
-		rastDesc.FillMode = D3D11_FILL_SOLID; // режим заливки (заполнение)
+		rastDesc.CullMode = D3D11_CULL_BACK; // треугольники, обращенные в указанном направлении, не отображаются
+		// D3D11_CULL_NONE - всегда отображаются
+		// D3D11_CULL_FRONT - не рисовать треугольники, повернутые лицом
+		// D3D11_CULL_BACK - не рисовать треугольники, повернутые задом
+		rastDesc.FillMode = D3D11_FILL_SOLID; // режим заливки 
+		// D3D11_FILL_SOLID - заполнение
 		// D3D11_FILL_WIREFRAME - только линии
 		res = device->CreateRasterizerState(&rastDesc, &rastState);
 		if (FAILED(res))

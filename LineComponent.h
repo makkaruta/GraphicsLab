@@ -25,7 +25,6 @@ private:
 	ID3D11Buffer* indBuf;
 	ID3D11BlendState* blend;
 	ID3D11Buffer* constBuf;
-	ID3D11RasterizerState* rastState;
 	float blendFactor[4];
 	UINT sampleMask;
 public:

@@ -19,4 +19,5 @@ public:
 	int get_screenWidth() { return screenWidth; };
 	int get_screenHeight() { return screenHeight; };
 	void CreateDisplay(InputDevice* iDev);
+	void OnChangeScreenSize(const ScreenSize& args);
 };

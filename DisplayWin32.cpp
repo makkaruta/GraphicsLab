@@ -17,7 +17,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
 		PostQuitMessage(0);
 		return 0;
 	case WM_SIZE: // изменение размера окна
-		//std::cout << "Width: " << LOWORD(lparam) << ", Height: " << HIWORD(lparam) << std::endl;
 		((InputDevice*)GetWindowLongPtr(hwnd, DWLP_USER))->OnChangeScreenSize(LOWORD(lparam), HIWORD(lparam));
 		return 0;
 	case WM_KEYDOWN: // нажатие клавиши
@@ -76,7 +75,7 @@ void DisplayWin32::CreateDisplay(InputDevice* iDev) {
 	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC; // перерисовка окна при изменении ширины или высоты области + уникальный контекст устройства дл€ каждого окна
 	wc.lpfnWndProc = WndProc; // указатель на оконную процедуру
 	wc.cbClsExtra = 0; // число дополнительных байт после структуры
-	wc.cbWndExtra = 24; // число дополнительных байт после экземпл€ра окна
+	wc.cbWndExtra = 24; // число дополнительных байт после экземпл€ра окна (на ссылку iDev)
 	wc.hInstance = hInstance; // дескриптор приложени€
 	wc.hIcon = LoadIcon(nullptr, IDI_WINLOGO); // дескриптор иконки приложени€
 	wc.hIconSm = wc.hIcon; // дескриптор мини иконки
@@ -84,10 +83,10 @@ void DisplayWin32::CreateDisplay(InputDevice* iDev) {
 	wc.hbrBackground = static_cast<HBRUSH>(GetStockObject(BLACK_BRUSH)); // дескриптор фона
 	wc.lpszMenuName = nullptr; // название меню
 	wc.lpszClassName = applicationName; // название класса окна
-	wc.cbSize = sizeof(WNDCLASSEX);// * 10; // + sizeof(iDev); // размер этой структуры в байтах
+	wc.cbSize = sizeof(WNDCLASSEX); // размер этой структуры в байтах
 
 	RegisterClassEx(&wc); // –егистраци€ созданного класса окна
-	screenWidth = 800;
+	screenWidth = 1200;
 	screenHeight = 800;
 	posX = (GetSystemMetrics(SM_CXSCREEN) - screenWidth) / 2;
 	posY = (GetSystemMetrics(SM_CYSCREEN) - screenHeight) / 2;
@@ -107,10 +106,15 @@ void DisplayWin32::CreateDisplay(InputDevice* iDev) {
 		hInstance, // дескриптор приложени€
 		iDev); // указатель на обработчик ввода (не об€зательный параметр, пользовательские данные)
 
-	//std::cout << "iDev: " << iDev << std::endl;
-
 	ShowWindow(hWnd, SW_SHOW);
 	SetForegroundWindow(hWnd); // ѕереводит поток, который создал окно, в приоритетный режим
 	SetFocus(hWnd); // ”станавливает фокус клавиатуры на окно
 	ShowCursor(true);
+
+	iDev->ChangeScreenSize.AddRaw(this, &DisplayWin32::OnChangeScreenSize);
 };
+
+void DisplayWin32::OnChangeScreenSize(const ScreenSize& args) {
+	screenWidth = args.Width;
+	screenHeight = args.Height;
+}

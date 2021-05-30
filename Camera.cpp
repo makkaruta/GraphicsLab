@@ -37,7 +37,6 @@ void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
 	}
 	position = position + velDir * VelocityMagnitude * deltaTime;
 	ViewMatrix = DirectX::SimpleMath::Matrix::CreateLookAt(position, position + rotation.Forward(), rotation.Up());
-	//std::cout << "Width: " << screenWidth << " Height: " << screenHeight << std::endl;
 	ProjectionMatrix = DirectX::SimpleMath::Matrix::CreatePerspectiveFieldOfView(
 		(float)PI / 2.0f, // угол поля зрения по оси y (в радианах)
 		(float)screenWidth / screenHeight, // соотношение сторон изображения(ширина / высота)

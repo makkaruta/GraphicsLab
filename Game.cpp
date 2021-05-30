@@ -6,17 +6,14 @@ void Game::Run() {
 	Display.CreateDisplay(&inputDevice);
 	inputDevice.Initialize(Display.get_hWnd());
 	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight(), &inputDevice);
-	//std::cout << "Width: " << Display.get_screenWidth() << " Height: " << Display.get_screenHeight() << std::endl;
 	ErrorsOutput(PrepareResources());
 
 	MSG msg = {};
 	bool isExitRequested = false;
 	while (!isExitRequested) { // Цикл до сообщения о выходе от окна или пользователя
-		//inputDevice.MouseParam
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) { // Неблокирующий ввод
 			TranslateMessage(&msg); // Перевод нажатия клавиш в символы
 			DispatchMessage(&msg); // Обработка сообщения
-			//std::cout << msg.message << std::endl;
 		}
 		if (msg.message == WM_QUIT) { // Если было получено сообщение о выходе, в цикл больше входить не надо
 			isExitRequested = true;
@@ -30,13 +27,38 @@ void Game::Run() {
 }
 
 void Game::Initialize() {
+	// Сетка пола
+	LineComponentParameters grid;
+	int numDots = 200;
+	float density = 2.0f;
+	float offsetX = (((float)numDots) / (density)) / 1.35f;
+	float offsetY = 5.0f;
+	float distance = 100.0f;
+	grid.positions = new DirectX::SimpleMath::Vector4[numDots];
+	for (int i = 0; i < numDots / 2; i += 2)
+	{
+		grid.positions[i] = DirectX::SimpleMath::Vector4(-distance, 0.0f, offsetY - ((float)i) / density, 1.0f);
+		grid.positions[i + 1] = DirectX::SimpleMath::Vector4(distance, 0.0f, offsetY - ((float)i) / density, 1.0f);
+	}
+	for (int i = numDots / 2; i < numDots; i += 2)
+	{
+		grid.positions[i] = DirectX::SimpleMath::Vector4(offsetX - ((float)i) / density, 0.0f, -distance, 1.0f);
+		grid.positions[i + 1] = DirectX::SimpleMath::Vector4(offsetX - ((float)i) / density, 0.0f, distance, 1.0f);
+	}
+	grid.colors = new DirectX::SimpleMath::Vector4[numDots];
+	for (int i = 0; i < numDots; i++)
+		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	grid.numPoints = numDots;
+	Components.push_back(new LineComponent(grid));
+
+	// Цветная пирамидка
 	TriangleComponentParameters pyramid;
 	pyramid.positions = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.8f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.8f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.4f, 1.0f),
-	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.4f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.5f, 0.6f, 1.0f)};
+	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, -0.5f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.5f, 0.0f, 1.0f)};
 	pyramid.colors = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
@@ -46,35 +68,13 @@ void Game::Initialize() {
 	pyramid.indeces = new int[] {
 		0, 1, 2, // 1 часть основания
 		2, 3, 0, // 2 часть основания
-		0, 1, 4, // 1 боковая грань
-		1, 2, 4, // 2 боковая грань
-		2, 3, 4, // 3 боковая грань
-		3, 0, 4}; // 4 боковая грань
+		0, 4, 1, // 1 боковая грань
+		1, 4, 2, // 2 боковая грань
+		2, 4, 3, // 3 боковая грань
+		3, 4, 0}; // 4 боковая грань
 	pyramid.numPoints = 5;
 	pyramid.numIndeces = 18;
 	Components.push_back(new TriangleComponent(pyramid));
-	LineComponentParameters grid;
-	int numDots = 200;
-	float density = 2.0f;
-	float offsetX = (((float)numDots) / (density)) / 1.35f;
-	float offsetY = 5.0f;
-	float distance = 100.0f;
-	grid.positions = new DirectX::SimpleMath::Vector4[numDots];
-	for (int i = 0; i < numDots/2; i += 2)
-	{
-		grid.positions[i] = DirectX::SimpleMath::Vector4(-distance, 0.0f, offsetY - ((float)i) / density, 1.0f);
-		grid.positions[i+1] = DirectX::SimpleMath::Vector4(distance, 0.0f, offsetY - ((float)i) / density, 1.0f);
-	}
-	for (int i = numDots/2; i < numDots; i += 2)
-	{
-		grid.positions[i] = DirectX::SimpleMath::Vector4(offsetX - ((float)i) / density, 0.0f, -distance, 1.0f);
-		grid.positions[i+1] = DirectX::SimpleMath::Vector4(offsetX - ((float)i) / density, 0.0f, distance, 1.0f);
-	}
-	grid.colors = new DirectX::SimpleMath::Vector4[numDots];
-	for (int i = 0; i < numDots; i++)
-		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
-	grid.numPoints = numDots;
-	Components.push_back(new LineComponent(grid));
 }
 
 int Game::PrepareResources() {
@@ -112,15 +112,43 @@ int Game::PrepareResources() {
 		nullptr, // возвращает указатель, который представляет первый элемент в массиве уровней функций (null, если не нужно определять)
 		&context); // возвращает адрес указателя на объект, представляющий контекст устройства 
 	if (FAILED(res))
-		return ERROR_DEV_SC;
+		return ERROR_DEV_SWAPCHAIN;
 
 	ID3D11Texture2D* backTex; // Интерфейс 2D-текстуры (управляет данными текселей (минимальная единица текстуры трёхмерного объекта))
 	res = swapChain->GetBuffer(0, IID_ID3D11Texture2D, (void**)&backTex); // Доступ к одному из задних буферов свапчейна
 	if (FAILED(res))
-		return ERROR_SCBUF;
+		return ERROR_SWAPCHAIN_BUF;
+
 	res = device->CreateRenderTargetView(backTex, nullptr, &rtv); // Создание представления целевого объекта рендеринга
 	if (FAILED(res))
-		return ERROR_RTV;
+		return ERROR_RENDER_TARGER;
+
+	//................
+
+	D3D11_TEXTURE2D_DESC depthTexDesc = {};
+	depthTexDesc.ArraySize = 1;
+	depthTexDesc.MipLevels = 1;
+	depthTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	depthTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+	depthTexDesc.CPUAccessFlags = 0;
+	depthTexDesc.MiscFlags = 0;
+	depthTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthTexDesc.Width = Display.get_screenWidth();
+	depthTexDesc.Height = Display.get_screenHeight();
+	depthTexDesc.SampleDesc = {1, 0};
+	res = device->CreateTexture2D(&depthTexDesc, nullptr, &depthBuffer);
+	if (FAILED(res)) 
+		return ERROR_DEPTH_BUF;
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStenDesc = {};
+	depthStenDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStenDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStenDesc.Flags = 0;
+	res = device->CreateDepthStencilView(depthBuffer, &depthStenDesc, &depthView); 
+	if (FAILED(res)) 
+		return ERROR_DEPTH_STENSIL;
+
+	//........................
 
 	context->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&annotation); // Запрос интерфейса аннотации
 	device->QueryInterface(IID_ID3D11Debug, (void**)&debug); // Запрос интерфейса отладки
@@ -191,7 +219,6 @@ void Game::EndFrame() {
 
 void Game::Update() {
 	annotation->BeginEvent(L"BeginUpdate");
-	std::cout << "Width: " << Display.get_screenWidth() << " Height: " << Display.get_screenHeight() << std::endl;
 	camera.Update(deltaTime, Display.get_screenWidth(), Display.get_screenHeight());
 	for (int i = 0; i < Components.size(); i++)
 		Components[i]->Update(context, &camera); 
@@ -241,19 +268,25 @@ void Game::ErrorsOutput(int ErrorCode) {
 		std::cout << "Error creating Blend State" << std::endl;
 		break;
 	case ERROR_CREATING_CONSTBUF:
-		std::cout << "Error creating Constant Bufer" << std::endl;
+		std::cout << "Error creating Constant Buffer" << std::endl;
 		break;
 	case ERROR_CREATING_RASTSTATE:
 		std::cout << "Error creating Rasterizer State" << std::endl;
 		break;
-	case ERROR_DEV_SC:
-		std::cout << "Error creating Device and SwapChain" << std::endl;
+	case ERROR_DEV_SWAPCHAIN:
+		std::cout << "Error creating Device and Swap Chain" << std::endl;
 		break;
-	case ERROR_SCBUF:
-		std::cout << "Error SwapChain get buffer" << std::endl;
+	case ERROR_SWAPCHAIN_BUF:
+		std::cout << "Error creating SwapChain Buffer" << std::endl;
 		break;
-	case ERROR_RTV:
-		std::cout << "Error creating RenderTargetView" << std::endl;
+	case ERROR_RENDER_TARGER:
+		std::cout << "Error creating Render Target View" << std::endl;
+		break;
+	case ERROR_DEPTH_BUF:
+		std::cout << "Error creating Depth Buffer" << std::endl;
+		break;
+	case ERROR_DEPTH_STENSIL:
+		std::cout << "Error creating Depth Stensil View" << std::endl;
 		break;
 	case SUCCESS:
 		break;

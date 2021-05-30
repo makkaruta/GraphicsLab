@@ -166,14 +166,6 @@ int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device)
 		if (FAILED(res))
 			return ERROR_CREATING_CONSTBUF;
 
-		CD3D11_RASTERIZER_DESC rastDesc = {}; // дескриптор растеризатора
-		rastDesc.CullMode = D3D11_CULL_NONE; // треугольники, обращенные в указанном направлении, не отображаются (всегда отображаются)
-		rastDesc.FillMode = D3D11_FILL_SOLID; // режим заливки (заполнение)
-		// D3D11_FILL_WIREFRAME - только линии
-		res = device->CreateRasterizerState(&rastDesc, &rastState);
-		if (FAILED(res))
-			return ERROR_CREATING_RASTSTATE;
-
 		return SUCCESS;
 	}
 	return NOTHING_TO_DRAW;
@@ -211,8 +203,7 @@ void LineComponent::Draw(ID3D11DeviceContext* context) {
 	if (parameters.numPoints != 0)
 	{
 		context->IASetInputLayout(layout);
-		context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST); // список треугольников: задаются вершины каждого треугольника
-		// другой вид - лента треугольников (STRIP), когда отрисовка происходит по индексам 0-1-2, 1-2-3, 2-3-4
+		context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
 		context->IASetVertexBuffers(
 			0, // первый слот
 			2, // количество буферов
@@ -223,7 +214,6 @@ void LineComponent::Draw(ID3D11DeviceContext* context) {
 		context->PSSetShader(pixelShader, nullptr, 0);
 		context->OMSetBlendState(blend, blendFactor, sampleMask);
 		context->VSSetConstantBuffers(0, 1, &constBuf);
-		context->RSSetState(rastState);
 		context->Draw(
 			parameters.numPoints, // количество точек в вертексном буфере
 			0); // первый индекс для отрисовки

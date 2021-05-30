@@ -3,14 +3,15 @@
 #include "pch.h"
 
 #include "DisplayWin32.h"
-//#include "Camera.h"
 #include "GameComponent.h"
 #include "TriangleComponent.h"
 #include "LineComponent.h"
 
-#define ERROR_DEV_SC 14
-#define ERROR_SCBUF 15
-#define ERROR_RTV 16
+#define ERROR_DEV_SWAPCHAIN 14
+#define ERROR_SWAPCHAIN_BUF 15
+#define ERROR_RENDER_TARGER 16
+#define ERROR_DEPTH_BUF 17
+#define ERROR_DEPTH_STENSIL 18
 
 class Game {
 private:
@@ -22,6 +23,8 @@ private:
 	// Все вызовы рисования выполняются через объект контекста устройства, который инкапсулирует интерфейсы.
 	IDXGISwapChain* swapChain; // свапчейн (цепочка подкачки)
 	ID3D11RenderTargetView* rtv; // целевой объект рендеринга
+	ID3D11Texture2D* depthBuffer; // 
+	ID3D11DepthStencilView* depthView; //
 	ID3DUserDefinedAnnotation* annotation; // Описание концептуальных разделов и маркеров в потоке кода приложения
 	// Позволяет переходить к интересующим частям временной шкалы или понимать, какой набор вызовов Direct3D производится какими разделами кода приложения
 	ID3D11Debug* debug; // Интерфейс отладки управляет настройками отладки и проверяет состояние конвейера
