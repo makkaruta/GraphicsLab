@@ -10,6 +10,7 @@ struct TriangleComponentParameters {
 	int *indeces;
 	int numPoints;
 	int numIndeces;
+	DirectX::SimpleMath::Vector3 compPosition;
 };
 
 class TriangleComponent : public GameComponent {

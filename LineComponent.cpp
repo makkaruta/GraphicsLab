@@ -17,7 +17,7 @@ LineComponent::LineComponent(LineComponentParameters param) {
 	parameters.numPoints = param.numPoints;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
-	compPosition = DirectX::SimpleMath::Vector3::Zero;
+	compPosition = param.compPosition;
 }
 
 int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {

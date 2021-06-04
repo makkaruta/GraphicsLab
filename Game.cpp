@@ -32,7 +32,7 @@ void Game::Initialize() {
 	int numDots = 200;
 	float density = 2.0f;
 	float offsetX = (((float)numDots) / (density)) / 1.35f;
-	float offsetY = 5.0f;
+	float offsetY = 25.0f;
 	float distance = 100.0f;
 	grid.positions = new DirectX::SimpleMath::Vector4[numDots];
 	for (int i = 0; i < numDots / 2; i += 2)
@@ -49,16 +49,17 @@ void Game::Initialize() {
 	for (int i = 0; i < numDots; i++)
 		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	grid.numPoints = numDots;
+	grid.compPosition = DirectX::SimpleMath::Vector3::Zero;
 	Components.push_back(new LineComponent(grid));
 
 	// Цветная пирамидка
 	TriangleComponentParameters pyramid;
 	pyramid.positions = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, 0.5f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.5f, -0.5f, 0.5f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.5f, -0.5f, -0.5f, 1.0f),
-	DirectX::SimpleMath::Vector4(-0.5f, -0.5f, -0.5f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.5f, 0.0f, 1.0f)};
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f)};
 	pyramid.colors = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
@@ -74,7 +75,46 @@ void Game::Initialize() {
 		3, 4, 0}; // 4 боковая грань
 	pyramid.numPoints = 5;
 	pyramid.numIndeces = 18;
+	pyramid.compPosition = DirectX::SimpleMath::Vector3(1, 0, 1);
 	Components.push_back(new TriangleComponent(pyramid));
+	
+	// Желтый куб
+	TriangleComponentParameters cube;
+	cube.positions = new DirectX::SimpleMath::Vector4[]{
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f), // нижний квадрат
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, 0.5f, 1.0f), // верхний квадрат
+	DirectX::SimpleMath::Vector4(0.5f, 1.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 1.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, -0.5f, 1.0f)};
+	cube.colors = new DirectX::SimpleMath::Vector4[]{
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f)};
+	cube.indeces = new int[] {
+		0, 1, 2, // нижний квадрат
+		2, 3, 0,
+		4, 6, 5, // верхний квадрата
+		6, 4, 7,
+		0, 4, 1, // 1 боковая грань
+		1, 4, 5, 
+		1, 5, 2, // 2 боковая грань
+		2, 5, 6, 
+		2, 7, 3, // 3 боковая грань
+		2, 6, 7, 
+		0, 3, 4, // 4 боковая грань
+		3, 7, 4};
+	cube.numPoints = 8;
+	cube.numIndeces = 12*3;
+	cube.compPosition = DirectX::SimpleMath::Vector3(2, 0, 3);
+	Components.push_back(new TriangleComponent(cube));
 }
 
 int Game::PrepareResources() {
@@ -123,32 +163,28 @@ int Game::PrepareResources() {
 	if (FAILED(res))
 		return ERROR_RENDER_TARGER;
 
-	//................
-
 	D3D11_TEXTURE2D_DESC depthTexDesc = {};
-	depthTexDesc.ArraySize = 1;
-	depthTexDesc.MipLevels = 1;
-	depthTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
-	depthTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-	depthTexDesc.CPUAccessFlags = 0;
-	depthTexDesc.MiscFlags = 0;
-	depthTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthTexDesc.ArraySize = 1; // количество текстур в массиве текстур
+	depthTexDesc.MipLevels = 1; // максимальное количество уровней MIP - карты в текстуре
+	depthTexDesc.Format = DXGI_FORMAT_R32_TYPELESS; // однокомпонентный 32-битный безтиповый формат, поддерживающий 32 бита для красного канала
+	depthTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL; // привязка к шейдеру и буферу глубин
+	depthTexDesc.CPUAccessFlags = 0; // доступ к ЦП не требуется
+	depthTexDesc.MiscFlags = 0; // дополнительные флаги
+	depthTexDesc.Usage = D3D11_USAGE_DEFAULT; // способ чтения и записи текстуры
 	depthTexDesc.Width = Display.get_screenWidth();
 	depthTexDesc.Height = Display.get_screenHeight();
-	depthTexDesc.SampleDesc = {1, 0};
+	depthTexDesc.SampleDesc = {1, 0}; // структура, определяющая параметры мультисэмплинга для текстуры (количество мультисэмплов на пиксель, качество изображения)
 	res = device->CreateTexture2D(&depthTexDesc, nullptr, &depthBuffer);
 	if (FAILED(res)) 
 		return ERROR_DEPTH_BUF;
 
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStenDesc = {};
-	depthStenDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthStenDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	depthStenDesc.Format = DXGI_FORMAT_D32_FLOAT; // однокомпонентный 32-битный формат с плавающей запятой, поддерживающий 32-битную глубину
+	depthStenDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D; // как будет осуществляться доступ к ресурсу трафарета глубины
 	depthStenDesc.Flags = 0;
 	res = device->CreateDepthStencilView(depthBuffer, &depthStenDesc, &depthView); 
 	if (FAILED(res)) 
 		return ERROR_DEPTH_STENSIL;
-
-	//........................
 
 	context->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&annotation); // Запрос интерфейса аннотации
 	device->QueryInterface(IID_ID3D11Debug, (void**)&debug); // Запрос интерфейса отладки
@@ -208,8 +244,9 @@ void Game::PrepareFrame() {
 	context->ClearState();
 	//float color[] = { totalTime, 0.1f, 0.1f, 1.0f };
 	float color[] = { 0.2f, 0.2f, 0.2f, 0.5f };
-	context->OMSetRenderTargets(1, &rtv, nullptr); // привязка рендер таргета к заднему буферу, последний параметр - глубина привязки
+	context->OMSetRenderTargets(1, &rtv, depthView); // привязка рендер таргета и буфера глубин к заднему буферу
 	context->ClearRenderTargetView(rtv, color);
+	context->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	context->RSSetViewports(1, &viewport); // первый параметр - количество окон
 }
 

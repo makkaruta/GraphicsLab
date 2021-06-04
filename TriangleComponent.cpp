@@ -9,7 +9,7 @@ TriangleComponent::TriangleComponent() {
 	parameters.numIndeces = 0;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
-	compPosition = DirectX::SimpleMath::Vector3(0, 0.5 ,0);
+	compPosition = DirectX::SimpleMath::Vector3(0, 0 ,0);
 }
 
 TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
@@ -20,7 +20,7 @@ TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
 	parameters.numIndeces = param.numIndeces;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
-	compPosition = DirectX::SimpleMath::Vector3(0, 0.5, 0);
+	compPosition = param.compPosition;
 }
 
 int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {

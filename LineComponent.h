@@ -9,6 +9,7 @@ struct LineComponentParameters {
 	DirectX::SimpleMath::Vector4* positions;
 	DirectX::SimpleMath::Vector4* colors;
 	int numPoints;
+	DirectX::SimpleMath::Vector3 compPosition;
 };
 
 class LineComponent : public GameComponent {
