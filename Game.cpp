@@ -59,6 +59,8 @@ void Game::Initialize() {
 
 	// ѕирамидка
 	TriangleComponentParameters pyramid;
+	pyramid.numPoints = 5;
+	pyramid.numIndeces = 18;
 	pyramid.positions = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
@@ -84,57 +86,84 @@ void Game::Initialize() {
 		1, 4, 2, // 2 бокова€ грань
 		2, 4, 3, // 3 бокова€ грань
 		3, 4, 0}; // 4 бокова€ грань
-	pyramid.numPoints = 5;
-	pyramid.numIndeces = 18;
 	pyramid.textureFileName = L"textures/colorful.png";
 	pyramid.compPosition = DirectX::SimpleMath::Vector3(1.5, 0, 1);
 	Components.push_back(new TriangleComponent(pyramid));
 	
 	//  уб
 	TriangleComponentParameters cube;
+	cube.numPoints = 24;
+	cube.numIndeces = 36;
 	cube.positions = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f), // нижний квадрат
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f), // нижн€€ гр€нь
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
-	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, 0.5f, 1.0f), // верхний квадрат
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, 0.5f, 1.0f), // верхн€€ грань
 	DirectX::SimpleMath::Vector4(0.5f, 1.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 1.0f, -0.5f, 1.0f),
-	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, -0.5f, 1.0f)};
-	cube.colors = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f) };
-	cube.texcoords = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(0.666f, 0.55f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 0.55f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.55f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.333f, 0.55f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.666f, 0.25f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 0.25f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.25f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.333f, 0.25f, 1.0f, 1.0f) };
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f), // передн€€ грань
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f), // задн€€ грань
+	DirectX::SimpleMath::Vector4(0.5f, 1.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 1.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f), // лева€ грань
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 1.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f), // права€ грань
+	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 1.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f)};
+	//cube.colors = new DirectX::SimpleMath::Vector4[]{
+	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f), // нижн€€ гр€нь
+	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f), // верхн€€ грань
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f), // передн€€ грань
+	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f), // задн€€ грань
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f), // лева€ грань
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f), // права€ грань
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
+	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f) };
+	cube.colors = new DirectX::SimpleMath::Vector4[cube.numPoints];
+	for (int i = 0; i < cube.numPoints; i++)
+		cube.colors[i] = DirectX::SimpleMath::Vector4(0.6f, 0.6f, 0.6f, 1.0f);
+	cube.texcoords = new DirectX::SimpleMath::Vector4[cube.numPoints];
+	for (int i = 0; i < cube.numPoints; i++)
+		cube.texcoords[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	cube.indeces = new int[] {
-		0, 1, 2, // нижний квадрат
+		0, 1, 2, // нижн€€ гр€нь
 		2, 3, 0,
-		4, 6, 5, // верхний квадрата
-		6, 4, 7,
-		0, 4, 1, // 1 бокова€ грань
-		1, 4, 5, 
-		1, 5, 2, // 2 бокова€ грань
-		2, 5, 6, 
-		2, 7, 3, // 3 бокова€ грань
-		2, 6, 7, 
-		0, 3, 4, // 4 бокова€ грань
-		3, 7, 4};
-	cube.numPoints = 8;
-	cube.numIndeces = 12*3; 
-	cube.textureFileName = nullptr; // L"textures/pion.png";
+		6, 5, 4, // верхн€€ грань
+		4, 7, 6,
+		8, 9, 10, // передн€€ грань
+		10, 11, 8,
+		14, 13, 12, // задн€€ грань
+		12, 15, 14,
+		18, 17, 16, // лева€ грань
+		16, 19, 18,
+		20, 21, 22, // права€ грань
+		22, 23, 20};
+	cube.textureFileName = nullptr;
 	cube.compPosition = DirectX::SimpleMath::Vector3(2, 0, 3);
 	Components.push_back(new TriangleComponent(cube));
 }
@@ -271,7 +300,6 @@ void Game::PrepareFrame() {
 		frameCount = 0;
 	}
 	context->ClearState();
-	//float color[] = { totalTime, 0.1f, 0.1f, 1.0f };
 	float color[] = { 0.2f, 0.2f, 0.2f, 0.5f };
 	context->OMSetRenderTargets(1, &rtv, depthView); // прив€зка рендер таргета и буфера глубин к заднему буферу
 	context->ClearRenderTargetView(rtv, color);
@@ -333,6 +361,9 @@ void Game::ErrorsOutput(int ErrorCode) {
 	case ERROR_CREATING_TEXBUF:
 		std::cout << "Error creating Texture Coord Buffer" << std::endl;
 		break;
+	case ERROR_CREATING_NORMBUF:
+		std::cout << "Error creating Normal Buffer" << std::endl;
+		break;
 	case ERROR_CREATING_INDBUF:
 		std::cout << "Error creating Index Buffer" << std::endl;
 		break;
@@ -341,6 +372,9 @@ void Game::ErrorsOutput(int ErrorCode) {
 		break;
 	case ERROR_CREATING_CONSTBUF:
 		std::cout << "Error creating Constant Buffer" << std::endl;
+		break;
+	case ERROR_CREATING_LIGHTTBUF:
+		std::cout << "Error creating Light Buffer" << std::endl;
 		break;
 	case ERROR_CREATING_RASTSTATE:
 		std::cout << "Error creating Rasterizer State" << std::endl;

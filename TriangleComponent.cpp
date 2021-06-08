@@ -12,6 +12,7 @@ TriangleComponent::TriangleComponent() {
 	vertexShader = nullptr;
 	pixelShader = nullptr;
 	sampler = nullptr;
+	normals = nullptr;
 	compPosition = DirectX::SimpleMath::Vector3(0, 0 ,0);
 }
 
@@ -34,6 +35,9 @@ TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
 		NULL, // если NULL, указывает, что объект не создается как часть агрегата
 		CLSCTX_INPROC_SERVER, // выполняется в том же процессе, что и вызывающая функция
 		IID_PPV_ARGS(&factory));
+	normals = new DirectX::SimpleMath::Vector4[parameters.numPoints];
+	std::cout << "Normals: " << std::endl;
+	NormalsCalc(); // считаем нормали для освещения
 }
 
 int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {
@@ -113,11 +117,19 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 			2,
 			D3D11_APPEND_ALIGNED_ELEMENT,
 			D3D11_INPUT_PER_VERTEX_DATA,
+			0},
+		D3D11_INPUT_ELEMENT_DESC {
+			"NORMAL",
+			0,
+			DXGI_FORMAT_R32G32B32A32_FLOAT,
+			3,
+			D3D11_APPEND_ALIGNED_ELEMENT,
+			D3D11_INPUT_PER_VERTEX_DATA,
 			0}
 	};
 	res = device->CreateInputLayout(
 		inputElements,
-		3, // количество входных элементов
+		4, // количество входных элементов
 		vertexBC->GetBufferPointer(),
 		vertexBC->GetBufferSize(),
 		&layout);
@@ -144,10 +156,15 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 	texcoordsData.pSysMem = parameters.texcoords;
 	texcoordsData.SysMemPitch = 0;
 	texcoordsData.SysMemSlicePitch = 0;
+	D3D11_SUBRESOURCE_DATA normalsData = {};
+	normalsData.pSysMem = normals;
+	normalsData.SysMemPitch = 0;
+	normalsData.SysMemSlicePitch = 0;
 
 	ID3D11Buffer* pb; // буфер позиций
 	ID3D11Buffer* cb; // буфер цветов
 	ID3D11Buffer* tb; // буфер координат для текстуры
+	ID3D11Buffer* nb; // буфер нормалей
 
 	res = device->CreateBuffer(&dataBufDesc, &positionsData, &pb);
 	if (FAILED(res))
@@ -158,6 +175,9 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 	res = device->CreateBuffer(&dataBufDesc, &texcoordsData, &tb);
 	if (FAILED(res))
 		return ERROR_CREATING_TEXBUF;
+	res = device->CreateBuffer(&dataBufDesc, &normalsData, &nb);
+	if (FAILED(res))
+		return ERROR_CREATING_NORMBUF;
 
 	D3D11_BUFFER_DESC indexBufDesc = {};
 	indexBufDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -179,12 +199,15 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 	vBuffers[0] = pb;
 	vBuffers[1] = cb;
 	vBuffers[2] = tb;
+	vBuffers[3] = nb;
 	strides[0] = 16;
 	strides[1] = 16;
 	strides[2] = 16;
+	strides[3] = 16;
 	offsets[0] = 0;
 	offsets[1] = 0;
 	offsets[2] = 0;
+	offsets[3] = 0;
 
 	D3D11_BLEND_DESC blendStateDesc; // дескриптор смешивания
 	blendStateDesc.AlphaToCoverageEnable = false;
@@ -214,10 +237,21 @@ int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> dev
 	constBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // доступ для записи
 	constBufDesc.MiscFlags = 0;
 	constBufDesc.StructureByteStride = 0; // размер каждого элемента в структуре буфера
-	constBufDesc.ByteWidth = sizeof(DirectX::SimpleMath::Matrix);
+	constBufDesc.ByteWidth = sizeof(constData);
 	res = device->CreateBuffer(&constBufDesc, nullptr, &constBuf);
 	if (FAILED(res))
 		return ERROR_CREATING_CONSTBUF;
+
+	D3D11_BUFFER_DESC lightBufDesc = {};
+	lightBufDesc.Usage = D3D11_USAGE_DYNAMIC;
+	lightBufDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	lightBufDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	lightBufDesc.MiscFlags = 0;
+	lightBufDesc.StructureByteStride = 0;
+	lightBufDesc.ByteWidth = sizeof(lightData);
+	res = device->CreateBuffer(&lightBufDesc, nullptr, &lightBuf);
+	if (FAILED(res))
+		return ERROR_CREATING_LIGHTTBUF;
 
 	CD3D11_RASTERIZER_DESC rastDesc = {}; // дескриптор растеризатора
 	rastDesc.CullMode = D3D11_CULL_BACK; // треугольники, обращенные в указанном направлении, не отображаются
@@ -342,9 +376,12 @@ void TriangleComponent::DestroyResourses() {
 }
 
 void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
-	auto proj = DirectX::SimpleMath::Matrix::CreateTranslation(compPosition) * camera->ViewMatrix * camera->ProjectionMatrix; // получение проекции
-	proj = proj.Transpose();
 
+	// заполнение константного буфера
+	constData data;
+	data.WorldViewProj = DirectX::SimpleMath::Matrix::CreateTranslation(compPosition) * camera->ViewMatrix * camera->ProjectionMatrix; // получение проекции
+	data.WorldViewProj = data.WorldViewProj.Transpose();
+	data.World = DirectX::SimpleMath::Matrix::CreateTranslation(parameters.compPosition);
 	D3D11_MAPPED_SUBRESOURCE subresourse = {};
 	context->Map( // получение указателя на ресурс и запрет доступа GPU к этому ресурсу
 		constBuf,
@@ -352,13 +389,29 @@ void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
 		D3D11_MAP_WRITE_DISCARD, // получение ресурса для записи
 		0, // D3D11_MAP_FLAG_DO_NOT_WAIT
 		&subresourse);
-
 	memcpy(
 		reinterpret_cast<float*>(subresourse.pData), // куда
-		&proj, // откуда
-		sizeof(DirectX::SimpleMath::Matrix)); // сколько байт
-
+		&data, // откуда
+		sizeof(constData)); // сколько байт
 	context->Unmap(constBuf, 0); // вернуть доступ GPU
+
+	// заполнения константного буфера для света
+	lightData light;
+	light.ViewerPos = DirectX::SimpleMath::Vector4(camera->position.x, camera->position.y, camera->position.z, 1.0f);
+	light.Direction = DirectX::SimpleMath::Vector4(10.0f, 100.0f, 10.0f, 1.0f);;
+	light.Color = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	D3D11_MAPPED_SUBRESOURCE subresourse2 = {};
+	context->Map( // получение указателя на ресурс и запрет доступа GPU к этому ресурсу
+		lightBuf,
+		0,  // номер подресурса
+		D3D11_MAP_WRITE_DISCARD, // получение ресурса для записи
+		0, // D3D11_MAP_FLAG_DO_NOT_WAIT
+		&subresourse2);
+	memcpy(
+		reinterpret_cast<float*>(subresourse2.pData), // куда
+		&light, // откуда
+		sizeof(lightData)); // сколько байт
+	context->Unmap(lightBuf, 0); // вернуть доступ GPU
 }
 
 void TriangleComponent::Draw(ID3D11DeviceContext* context) {
@@ -370,14 +423,15 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context) {
 		context->IASetIndexBuffer(indBuf, DXGI_FORMAT_R32_UINT, 0);
 		context->IASetVertexBuffers(
 			0, // первый слот
-			3, // количество буферов
+			4, // количество буферов
 			vBuffers, // буферы вершин
 			strides, // шаг вершин для каждого буфера
 			offsets); // смещение от начала для каждого буфера
 		context->VSSetShader(vertexShader, nullptr, 0);
 		context->PSSetShader(pixelShader, nullptr, 0);
 		context->OMSetBlendState(blend, blendFactor, sampleMask);
-		context->VSSetConstantBuffers(0, 1, &constBuf);
+		context->VSSetConstantBuffers(0, 1, &constBuf); 
+		context->PSSetConstantBuffers(1, 1, &lightBuf);
 		if (parameters.textureFileName != nullptr)
 		{
 			context->PSSetShaderResources(0, 1, &textureView);
@@ -389,4 +443,44 @@ void TriangleComponent::Draw(ID3D11DeviceContext* context) {
 			0, // первый индекс для отрисовки
 			0);// значение, добавляемое к каждому индексу перед чтением вершины из буфера вершин
 	}
+}
+
+void TriangleComponent::NormalsCalc() {
+	int ind_a, ind_b, ind_c;
+	DirectX::SimpleMath::Vector4 a, b, c, p, q, norm;
+	for (int i = 0; i < parameters.numIndeces; i += 3)
+	{
+		ind_a = parameters.indeces[i];
+		ind_b = parameters.indeces[i+1];
+		ind_c = parameters.indeces[i+2];
+
+		a = parameters.positions[ind_a];
+		b = parameters.positions[ind_b];
+		c = parameters.positions[ind_c];
+
+		norm.x = a.y * b.z - a.z * b.y;
+		norm.y = a.z * b.x - a.x * b.z; 
+		norm.z = a.x * b.y - a.y * b.x;
+		norm.w = 1.0f;
+
+		normals[ind_a] = norm;
+		normals[ind_b] = norm;
+		normals[ind_c] = norm;
+
+		/*std::cout << "p = " << p.x << " " << p.y << " " << p.z << " " << p.w << std::endl;
+		std::cout << "q = " << q.x << " " << q.y << " " << q.z << " " << q.w << std::endl;
+		std::cout << "norm.Cross(p, q) = " << norm.Cross(p, q).x << " " << norm.Cross(p, q).y << " " << norm.Cross(p, q).z << " " << norm.Cross(p, q).w << std::endl;
+		std::cout << "norm = " << norm.x << " " << norm.y << " " << norm.z << " " << norm.w << std::endl;*/
+	}; 
+
+	for (int i = 0; i < parameters.numIndeces; i += 3)
+	{
+		ind_a = parameters.indeces[i];
+		ind_b = parameters.indeces[i + 1];
+		ind_c = parameters.indeces[i + 2];
+		std::cout << normals[ind_a].x << " " << normals[ind_a].y << " " << normals[ind_a].z << " " << normals[ind_a].w << std::endl;
+		std::cout << normals[ind_b].x << " " << normals[ind_b].y << " " << normals[ind_b].z << " " << normals[ind_b].w << std::endl;
+		std::cout << normals[ind_c].x << " " << normals[ind_c].y << " " << normals[ind_c].z << " " << normals[ind_c].w << std::endl;
+	}
+	std::cout << std::endl;
 }

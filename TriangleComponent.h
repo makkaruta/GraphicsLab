@@ -15,6 +15,18 @@ struct TriangleComponentParameters {
 	DirectX::SimpleMath::Vector3 compPosition;
 };
 
+struct constData
+{
+	DirectX::SimpleMath::Matrix WorldViewProj;
+	DirectX::SimpleMath::Matrix World;
+};
+
+struct lightData {
+	DirectX::SimpleMath::Vector4 Direction;
+	DirectX::SimpleMath::Vector4 Color;
+	DirectX::SimpleMath::Vector4 ViewerPos;
+};
+
 class TriangleComponent : public GameComponent {
 private:
 	TriangleComponentParameters parameters;
@@ -23,12 +35,13 @@ private:
 	ID3D11VertexShader* vertexShader;
 	ID3D11PixelShader* pixelShader;
 	ID3D11InputLayout* layout; // определение того, как передавать данные вершин, которые размещены в памяти, на этап сборщика ввода графического конвейера
-	ID3D11Buffer* vBuffers[3];
-	UINT strides[3]; // шаг вершин для каждого буфера
-	UINT offsets[3]; // смещение от начала для каждого буфера
+	ID3D11Buffer* vBuffers[4];
+	UINT strides[4]; // шаг вершин для каждого буфера
+	UINT offsets[4]; // смещение от начала для каждого буфера
 	ID3D11Buffer* indBuf;
 	ID3D11BlendState* blend;
 	ID3D11Buffer* constBuf;
+	ID3D11Buffer* lightBuf;
 	ID3D11RasterizerState* rastState;
 	float blendFactor[4];
 	UINT sampleMask;
@@ -36,6 +49,8 @@ private:
 	ID3D11Texture2D* texture; // текстура
 	ID3D11ShaderResourceView* textureView;
 	ID3D11SamplerState* sampler;
+	DirectX::SimpleMath::Vector4* normals; // вектор нормалей
+	void NormalsCalc();
 public:
 	DirectX::SimpleMath::Vector3 compPosition;
 	TriangleComponent();
