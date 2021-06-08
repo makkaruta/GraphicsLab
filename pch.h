@@ -6,6 +6,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <WinUser.h>
+#include <Wincodec.h>
 #include <wrl.h>
 #include <vector>
 #include <chrono>

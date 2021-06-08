@@ -18,7 +18,6 @@ void Camera::Initialize(int screenWidth, int screenHeight, InputDevice* inpDev) 
 }
 
 void Camera::Update(float deltaTime, int screenWidth, int screenHeight) {
-	//std::cout << "Yaw: " << Yaw << " Pitch: " << Pitch << std::endl;
 	auto rotation = DirectX::SimpleMath::Matrix::CreateFromYawPitchRoll(Yaw, Pitch, 0);
 	auto velDirection = DirectX::SimpleMath::Vector3::Zero;
 	if (inputDevice->IsKeyDown(Keys::W)) velDirection += DirectX::SimpleMath::Vector3(1.0f, 0.0f, 0.0f);

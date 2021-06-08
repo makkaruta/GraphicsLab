@@ -7,9 +7,11 @@
 struct TriangleComponentParameters {
 	DirectX::SimpleMath::Vector4 *positions;
 	DirectX::SimpleMath::Vector4 *colors;
+	DirectX::SimpleMath::Vector4* texcoords;
 	int *indeces;
 	int numPoints;
 	int numIndeces;
+	LPCWSTR textureFileName; // название файла с текстурой
 	DirectX::SimpleMath::Vector3 compPosition;
 };
 
@@ -21,20 +23,25 @@ private:
 	ID3D11VertexShader* vertexShader;
 	ID3D11PixelShader* pixelShader;
 	ID3D11InputLayout* layout; // определение того, как передавать данные вершин, которые размещены в памяти, на этап сборщика ввода графического конвейера
-	ID3D11Buffer* vBuffers[2];
-	UINT strides[2]; // шаг вершин для каждого буфера
-	UINT offsets[2]; // смещение от начала для каждого буфера
+	ID3D11Buffer* vBuffers[3];
+	UINT strides[3]; // шаг вершин для каждого буфера
+	UINT offsets[3]; // смещение от начала для каждого буфера
 	ID3D11Buffer* indBuf;
 	ID3D11BlendState* blend;
 	ID3D11Buffer* constBuf;
 	ID3D11RasterizerState* rastState;
 	float blendFactor[4];
 	UINT sampleMask;
+	IWICImagingFactory2* factory; // интерфейс загрузчика текстур
+	ID3D11Texture2D* texture; // текстура
+	ID3D11ShaderResourceView* textureView;
+	ID3D11SamplerState* sampler;
 public:
 	DirectX::SimpleMath::Vector3 compPosition;
 	TriangleComponent();
 	TriangleComponent(TriangleComponentParameters param);
 	int PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device);
+	int LoadTextureFromFile(Microsoft::WRL::ComPtr<ID3D11Device> device, ID3D11DeviceContext* context, bool generateMips, bool useSrgb, UINT frameIndex);
 	void DestroyResourses();
 	void Update(ID3D11DeviceContext* context, Camera* camera);
 	void Draw(ID3D11DeviceContext* context);

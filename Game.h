@@ -7,11 +7,11 @@
 #include "TriangleComponent.h"
 #include "LineComponent.h"
 
-#define ERROR_DEV_SWAPCHAIN 14
-#define ERROR_SWAPCHAIN_BUF 15
-#define ERROR_RENDER_TARGER 16
-#define ERROR_DEPTH_BUF 17
-#define ERROR_DEPTH_STENSIL 18
+#define ERROR_DEV_SWAPCHAIN 101
+#define ERROR_SWAPCHAIN_BUF 102
+#define ERROR_RENDER_TARGER 103
+#define ERROR_DEPTH_BUF 104
+#define ERROR_DEPTH_STENSIL 105
 
 class Game {
 private:

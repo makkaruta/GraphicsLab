@@ -33,6 +33,7 @@ public:
 	LineComponent();
 	LineComponent(LineComponentParameters param);
 	int PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device);
+	int LoadTextureFromFile(Microsoft::WRL::ComPtr<ID3D11Device> device, ID3D11DeviceContext* context, bool generateMips, bool useSrgb, UINT frameIndex) { return 0; };
 	void DestroyResourses();
 	void Update(ID3D11DeviceContext* context, Camera* camera);
 	void Draw(ID3D11DeviceContext* context);

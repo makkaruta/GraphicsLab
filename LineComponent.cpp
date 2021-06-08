@@ -29,7 +29,7 @@ int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device)
 			L"MiniTri.fx", // название файла с шейдером
 			nullptr, // макросы шейдера
 			nullptr, // include в файле с шейдерами
-			"VSMain", // точка входа
+			"LINE_VSMain", // точка входа
 			"vs_5_0", // цель шейдера (?)
 			D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, // флаги шейдера (добавление информации об отладочном файле + пропуск оптимизации при отладке)
 			0, // флаги эффекта 
@@ -39,23 +39,22 @@ int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device)
 			if (errorVertexCode) { // Если шейдер не был скомпилирован, что-то должно быть написано в сообщении об ошибке
 				char* compileErrors = (char*)(errorVertexCode->GetBufferPointer());
 				std::cout << compileErrors << std::endl;
-				return ERROR_VBC;
+				return ERROR_VERTEX_BC;
 			}
 			else // Если в сообщении об ошибке ничего не было, значит, он просто не смог найти сам файл шейдера
-				return MISSING_VS;
+				return MISSING_VERTEX_SHADER;
 		}
 
-		D3D_SHADER_MACRO Shader_Macros[] = { "TEST", "1", "TCOLOR", "float4(0.0f, 1.0f, 0.0f, 1.0f)", nullptr, nullptr }; // (попарно: название, определение)
 		ID3DBlob* errorPixelCode;
-		res = D3DCompileFromFile(L"MiniTri.fx", nullptr /*Shader_Macros*/, nullptr, "PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &pixelBC, &errorPixelCode);
+		res = D3DCompileFromFile(L"MiniTri.fx", nullptr, nullptr, "LINE_PSMain", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &pixelBC, &errorPixelCode);
 		if (FAILED(res)) {
 			if (errorPixelCode) {
 				char* compileErrors = (char*)(errorPixelCode->GetBufferPointer());
 				std::cout << compileErrors << std::endl;
-				return ERROR_PBC;
+				return ERROR_PIXEL_BC;
 			}
 			else
-				return MISSING_PS;
+				return MISSING_PIXEL_SHADER;
 		}
 
 		res = device->CreateVertexShader(
@@ -63,13 +62,13 @@ int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device)
 			vertexBC->GetBufferSize(),
 			nullptr, &vertexShader);
 		if (FAILED(res))
-			return ERROR_CREATING_VS;
+			return ERROR_CREATING_VERTEX_SHADER;
 		res = device->CreatePixelShader(
 			pixelBC->GetBufferPointer(),
 			pixelBC->GetBufferSize(),
 			nullptr, &pixelShader);
 		if (FAILED(res))
-			return ERROR_CREATING_PS;
+			return ERROR_CREATING_PIXEL_SHADER;
 
 		D3D11_INPUT_ELEMENT_DESC inputElements[] = { // Описание формата данных о точках
 			D3D11_INPUT_ELEMENT_DESC {
@@ -172,11 +171,12 @@ int LineComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device)
 }
 
 void LineComponent::DestroyResourses() {
-	//if (layout) layout->Release();
 	if (vertexShader != nullptr)
 		vertexShader->Release();
 	if (pixelShader != nullptr)
 		pixelShader->Release();
+	if (layout != nullptr)
+		layout->Release();
 }
 
 void LineComponent::Update(ID3D11DeviceContext* context, Camera* camera) {

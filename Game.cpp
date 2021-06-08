@@ -6,7 +6,8 @@ void Game::Run() {
 	Display.CreateDisplay(&inputDevice);
 	inputDevice.Initialize(Display.get_hWnd());
 	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight(), &inputDevice);
-	ErrorsOutput(PrepareResources());
+	int res = PrepareResources();
+	ErrorsOutput(res);
 
 	MSG msg = {};
 	bool isExitRequested = false;
@@ -18,10 +19,14 @@ void Game::Run() {
 		if (msg.message == WM_QUIT) { // Если было получено сообщение о выходе, в цикл больше входить не надо
 			isExitRequested = true;
 		}
-		PrepareFrame();
-		Update();
-		Draw();
-		EndFrame();
+		if (res == 0)
+		{
+			PrepareFrame();
+			Update();
+			Draw();
+			EndFrame();
+		}
+		
 	}
 	DestroyResources();
 }
@@ -47,12 +52,12 @@ void Game::Initialize() {
 	}
 	grid.colors = new DirectX::SimpleMath::Vector4[numDots];
 	for (int i = 0; i < numDots; i++)
-		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f); 
 	grid.numPoints = numDots;
 	grid.compPosition = DirectX::SimpleMath::Vector3::Zero;
 	Components.push_back(new LineComponent(grid));
 
-	// Цветная пирамидка
+	// Пирамидка
 	TriangleComponentParameters pyramid;
 	pyramid.positions = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
@@ -61,11 +66,17 @@ void Game::Initialize() {
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f)};
 	pyramid.colors = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f)};
+	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f)};
+	pyramid.texcoords = new DirectX::SimpleMath::Vector4[]{
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 1.0f, 1.0f) };
 	pyramid.indeces = new int[] {
 		0, 1, 2, // 1 часть основания
 		2, 3, 0, // 2 часть основания
@@ -75,10 +86,11 @@ void Game::Initialize() {
 		3, 4, 0}; // 4 боковая грань
 	pyramid.numPoints = 5;
 	pyramid.numIndeces = 18;
-	pyramid.compPosition = DirectX::SimpleMath::Vector3(1, 0, 1);
+	pyramid.textureFileName = L"textures/colorful.png";
+	pyramid.compPosition = DirectX::SimpleMath::Vector3(1.5, 0, 1);
 	Components.push_back(new TriangleComponent(pyramid));
 	
-	// Желтый куб
+	// Куб
 	TriangleComponentParameters cube;
 	cube.positions = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f), // нижний квадрат
@@ -94,10 +106,19 @@ void Game::Initialize() {
 	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f)};
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f) };
+	cube.texcoords = new DirectX::SimpleMath::Vector4[]{
+	DirectX::SimpleMath::Vector4(0.666f, 0.55f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 0.55f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.55f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.333f, 0.55f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.666f, 0.25f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 0.25f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.25f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.333f, 0.25f, 1.0f, 1.0f) };
 	cube.indeces = new int[] {
 		0, 1, 2, // нижний квадрат
 		2, 3, 0,
@@ -112,7 +133,8 @@ void Game::Initialize() {
 		0, 3, 4, // 4 боковая грань
 		3, 7, 4};
 	cube.numPoints = 8;
-	cube.numIndeces = 12*3;
+	cube.numIndeces = 12*3; 
+	cube.textureFileName = nullptr; // L"textures/pion.png";
 	cube.compPosition = DirectX::SimpleMath::Vector3(2, 0, 3);
 	Components.push_back(new TriangleComponent(cube));
 }
@@ -199,6 +221,13 @@ int Game::PrepareResources() {
 	int result;
 	for (int i = 0; i < Components.size(); i++)
 	{
+		result = Components[i]->LoadTextureFromFile(device, context, false, false, 0);
+		if (result != SUCCESS && result != ERROR_TEXTURE_FILE_MISSING)
+			return result;
+	}
+
+	for (int i = 0; i < Components.size(); i++)
+	{
 		result = Components[i]->PrepareResourses(device);
 		if (result != SUCCESS && result != NOTHING_TO_DRAW)
 			return result;
@@ -271,23 +300,26 @@ void Game::Draw() {
 
 void Game::ErrorsOutput(int ErrorCode) {
 	switch (ErrorCode) {
-	case ERROR_VBC:
+	case ERROR_VERTEX_BC:
 		std::cout << "Error compiling Vertex Byte Code" << std::endl;
 		break;
-	case MISSING_VS:
+	case MISSING_VERTEX_SHADER:
 		std::cout << "Missing Vertex Shader file" << std::endl;
 		break;
-	case ERROR_PBC:
+	case ERROR_PIXEL_BC:
 		std::cout << "Error compiling Pixel Byte Code" << std::endl;
 		break;
-	case MISSING_PS:
+	case MISSING_PIXEL_SHADER:
 		std::cout << "Missing Pixel Shader file" << std::endl;
 		break;
-	case ERROR_CREATING_VS:
+	case ERROR_CREATING_VERTEX_SHADER:
 		std::cout << "Error creating Vertex Shader" << std::endl;
 		break;
-	case ERROR_CREATING_PS:
+	case ERROR_CREATING_PIXEL_SHADER:
 		std::cout << "Error creating Pixel Shader" << std::endl;
+		break;
+	case ERROR_CREATING_COM_OBJ:
+		std::cout << "Error creating COM object" << std::endl;
 		break;
 	case ERROR_CREATING_LAYOUT:
 		std::cout << "Error creating Layout" << std::endl;
@@ -297,6 +329,9 @@ void Game::ErrorsOutput(int ErrorCode) {
 		break;
 	case ERROR_CREATING_COLBUF:
 		std::cout << "Error creating Color Buffer" << std::endl;
+		break;
+	case ERROR_CREATING_TEXBUF:
+		std::cout << "Error creating Texture Coord Buffer" << std::endl;
 		break;
 	case ERROR_CREATING_INDBUF:
 		std::cout << "Error creating Index Buffer" << std::endl;
@@ -309,6 +344,30 @@ void Game::ErrorsOutput(int ErrorCode) {
 		break;
 	case ERROR_CREATING_RASTSTATE:
 		std::cout << "Error creating Rasterizer State" << std::endl;
+		break;
+	case ERROR_CREATING_DECODER:
+		std::cout << "Error creating Decoder from texture file" << std::endl;
+		break;
+	case ERROR_GET_FRAME:
+		std::cout << "Error getting frame from texture" << std::endl;
+		break;
+	case ERROR_CREATING_CONVERTER:
+		std::cout << "Error creating format Converter" << std::endl;
+		break;
+	case ERROR_INITIALIZE_CONVERTER:
+		std::cout << "Error initializing Converter" << std::endl;
+		break;
+	case ERROR_COPY_PIXELS:
+		std::cout << "Error Copy Pixels" << std::endl;
+		break;
+	case ERROR_CREATING_TEXTURE:
+		std::cout << "Error creating Texture" << std::endl;
+		break;
+	case ERROR_CREATING_SHADER_RV:
+		std::cout << "Error creating Shader ResourceView" << std::endl;
+		break;
+	case ERROR_RESOURCES_NOT_PREPARED:
+		std::cout << "Error resources not prepared" << std::endl;
 		break;
 	case ERROR_DEV_SWAPCHAIN:
 		std::cout << "Error creating Device and Swap Chain" << std::endl;
@@ -324,6 +383,15 @@ void Game::ErrorsOutput(int ErrorCode) {
 		break;
 	case ERROR_DEPTH_STENSIL:
 		std::cout << "Error creating Depth Stensil View" << std::endl;
+		break;
+	case ERROR_TEXTURE_FILE_MISSING:
+		std::cout << "Error Texture File missing" << std::endl;
+		break;
+	case ERROR_LOAD_TEXTURE_ORDER:
+		std::cout << "Error: you should load texture before preparing resources" << std::endl;
+		break;
+	case ERROR_CREATING_SAMPLER_STATE:
+		std::cout << "Error creatinf Sampler State" << std::endl;
 		break;
 	case SUCCESS:
 		break;
