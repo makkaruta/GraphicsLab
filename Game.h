@@ -23,8 +23,8 @@ private:
 	// Все вызовы рисования выполняются через объект контекста устройства, который инкапсулирует интерфейсы.
 	IDXGISwapChain* swapChain; // свапчейн (цепочка подкачки)
 	ID3D11RenderTargetView* rtv; // целевой объект рендеринга
-	ID3D11Texture2D* depthBuffer; // 
-	ID3D11DepthStencilView* depthView; //
+	ID3D11Texture2D* depthBuffer;
+	ID3D11DepthStencilView* depthView;
 	ID3DUserDefinedAnnotation* annotation; // Описание концептуальных разделов и маркеров в потоке кода приложения
 	// Позволяет переходить к интересующим частям временной шкалы или понимать, какой набор вызовов Direct3D производится какими разделами кода приложения
 	ID3D11Debug* debug; // Интерфейс отладки управляет настройками отладки и проверяет состояние конвейера
@@ -46,5 +46,6 @@ private:
 	void ErrorsOutput(int ErrorCode);
 
 public:
+	Game();
 	void Run();
 };

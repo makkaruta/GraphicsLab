@@ -1,13 +1,23 @@
 #include "pch.h"
 #include "Game.h"
 
+Game::Game() {
+	context = nullptr;
+	swapChain = nullptr;
+	rtv = nullptr;
+	depthBuffer = nullptr;
+	depthView = nullptr;
+	annotation = nullptr;
+	debug = nullptr;
+}
+
 void Game::Run() {
 	Initialize();
 	Display.CreateDisplay(&inputDevice);
 	inputDevice.Initialize(Display.get_hWnd());
 	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight(), &inputDevice);
-	int res = PrepareResources();
-	ErrorsOutput(res);
+	int errors = PrepareResources();
+	ErrorsOutput(errors);
 
 	MSG msg = {};
 	bool isExitRequested = false;
@@ -15,18 +25,17 @@ void Game::Run() {
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) { // Ќеблокирующий ввод
 			TranslateMessage(&msg); // ѕеревод нажати€ клавиш в символы
 			DispatchMessage(&msg); // ќбработка сообщени€
+			if (msg.message == WM_QUIT) { // ≈сли было получено сообщение о выходе, в цикл больше входить не надо
+				isExitRequested = true;
+			}
 		}
-		if (msg.message == WM_QUIT) { // ≈сли было получено сообщение о выходе, в цикл больше входить не надо
-			isExitRequested = true;
-		}
-		if (res == 0)
+		if (errors == 0)
 		{
 			PrepareFrame();
 			Update();
 			Draw();
 			EndFrame();
 		}
-		
 	}
 	DestroyResources();
 }
@@ -52,40 +61,59 @@ void Game::Initialize() {
 	}
 	grid.colors = new DirectX::SimpleMath::Vector4[numDots];
 	for (int i = 0; i < numDots; i++)
-		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f); 
+		grid.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 0.88f, 1.0f, 1.0f); 
 	grid.numPoints = numDots;
 	grid.compPosition = DirectX::SimpleMath::Vector3::Zero;
 	Components.push_back(new LineComponent(grid));
 
 	// ѕирамидка
 	TriangleComponentParameters pyramid;
-	pyramid.numPoints = 5;
+	pyramid.numPoints = 16;
 	pyramid.numIndeces = 18;
 	pyramid.positions = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, -0.5f, 1.0f),
+	DirectX::SimpleMath::Vector4(-0.5f, 0.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f)};
-	pyramid.colors = new DirectX::SimpleMath::Vector4[]{
-	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f)};
+	pyramid.colors = new DirectX::SimpleMath::Vector4[pyramid.numPoints];
+	for (int i = 0; i < pyramid.numPoints; i++)
+		pyramid.colors[i] = DirectX::SimpleMath::Vector4(0.6f, 0.6f, 0.6f, 1.0f);
 	pyramid.texcoords = new DirectX::SimpleMath::Vector4[]{
 	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
+	DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 1.0f, 1.0f) };
 	pyramid.indeces = new int[] {
 		0, 1, 2, // 1 часть основани€
 		2, 3, 0, // 2 часть основани€
-		0, 4, 1, // 1 бокова€ грань
-		1, 4, 2, // 2 бокова€ грань
-		2, 4, 3, // 3 бокова€ грань
-		3, 4, 0}; // 4 бокова€ грань
+		4, 6, 5, // 1 бокова€ грань
+		7, 9, 8, // 2 бокова€ грань
+		10, 12, 11, // 3 бокова€ грань
+		13, 15, 14}; // 4 бокова€ грань
 	pyramid.textureFileName = L"textures/colorful.png";
 	pyramid.compPosition = DirectX::SimpleMath::Vector3(1.5, 0, 1);
 	Components.push_back(new TriangleComponent(pyramid));
@@ -119,37 +147,17 @@ void Game::Initialize() {
 	DirectX::SimpleMath::Vector4(-0.5f, 1.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 1.0f, 0.5f, 1.0f),
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 0.5f, 1.0f)};
-	//cube.colors = new DirectX::SimpleMath::Vector4[]{
-	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f), // нижн€€ гр€нь
-	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f), // верхн€€ грань
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f), // передн€€ грань
-	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 1.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f), // задн€€ грань
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f), // лева€ грань
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(0.0f, 1.0f, 0.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f), // права€ грань
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f),
-	//DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f) };
 	cube.colors = new DirectX::SimpleMath::Vector4[cube.numPoints];
 	for (int i = 0; i < cube.numPoints; i++)
-		cube.colors[i] = DirectX::SimpleMath::Vector4(0.6f, 0.6f, 0.6f, 1.0f);
+		cube.colors[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	cube.texcoords = new DirectX::SimpleMath::Vector4[cube.numPoints];
-	for (int i = 0; i < cube.numPoints; i++)
-		cube.texcoords[i] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	for (int i = 0; i < cube.numPoints; i += 4)
+	{
+		cube.texcoords[i] = DirectX::SimpleMath::Vector4(0.0f, 0.0f, 1.0f, 1.0f);
+		cube.texcoords[i+1] = DirectX::SimpleMath::Vector4(0.0f, 1.0f, 1.0f, 1.0f);
+		cube.texcoords[i+2] = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+		cube.texcoords[i+3] = DirectX::SimpleMath::Vector4(1.0f, 0.0f, 1.0f, 1.0f);
+	}
 	cube.indeces = new int[] {
 		0, 1, 2, // нижн€€ гр€нь
 		2, 3, 0,
@@ -163,7 +171,7 @@ void Game::Initialize() {
 		16, 19, 18,
 		20, 21, 22, // права€ грань
 		22, 23, 20};
-	cube.textureFileName = nullptr;
+	cube.textureFileName = L"textures/gradient.png";
 	cube.compPosition = DirectX::SimpleMath::Vector3(2, 0, 3);
 	Components.push_back(new TriangleComponent(cube));
 }
@@ -268,21 +276,25 @@ int Game::PrepareResources() {
 void Game::DestroyResources() {
 	for (int i = 0; i < Components.size(); i++)
 		Components[i]->DestroyResourses();
-	device->Release();
-	debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
-
-	/*
-	if (Context) Context->ClearState();
-	if (_constantBuffer) _constantBuffer->Release();
-	if (_vertexBuffer) _vertexBuffer->Release();
-	if (_indexBuffer) _indexBuffer->Release();
-	for (auto c : Components)
+	if (context != nullptr)
 	{
-		c->DestroyResources();
+		context->ClearState();
+		context->Release();
 	}
-	if (RenderView) RenderView->Release();
-	if (Context) Context->Release();
-	if (Device) Device->Release();*/
+	if (swapChain != nullptr)
+		swapChain->Release();
+	if (rtv != nullptr)
+		rtv->Release();
+	if (depthBuffer)
+		depthBuffer->Release();
+	if (depthView != nullptr)
+		depthView->Release();
+	if (annotation != nullptr)
+		annotation->Release();
+	if (device != nullptr)
+		device->Release();
+	if (debug != nullptr)
+		debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL);
 }
 
 void Game::PrepareFrame() {
@@ -300,7 +312,7 @@ void Game::PrepareFrame() {
 		frameCount = 0;
 	}
 	context->ClearState();
-	float color[] = { 0.2f, 0.2f, 0.2f, 0.5f };
+	float color[] = { 0.08f, 0.0f, 0.24f, 1.0f };
 	context->OMSetRenderTargets(1, &rtv, depthView); // прив€зка рендер таргета и буфера глубин к заднему буферу
 	context->ClearRenderTargetView(rtv, color);
 	context->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);

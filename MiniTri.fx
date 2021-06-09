@@ -79,18 +79,17 @@ float4 PSMain( PS_IN input ) : SV_Target
 	color = DiffuseMap.Sample(Sampler, float2(input.tex.x, input.tex.y));
 #endif
 
-	float3 LightDir = -Lights.Direction.xyz;
+	float3 LightDir = Lights.Direction.xyz;
 	float3 normal = normalize(input.normal.xyz);
 
 	float3 viewDir = normalize(Lights.ViewerPos.xyz - input.worldPos.xyz);
 	float3 refVec = normalize(reflect(LightDir, normal));
-
+	
 	float3 ambient = color.xyz * 0.5;
-	float3 diffuse = max(0, dot(LightDir, normal)) * color.xyz;
-	float3 specular = pow(max(0, dot(-viewDir, refVec)), 0.5) * 0.2;
+	float3 diffuse = saturate(dot(LightDir, normal)) * color.xyz;
+	float3 specular = pow(saturate(dot(-viewDir, refVec)), 0.7) * 0.3;
 
-	//return float4(Lights.Color.xyz * (ambient + diffuse + specular), 1.0f);
-	return float4(normal, 1.0f);
+	return float4(Lights.Color.xyz * (ambient + diffuse + specular), 1.0f);
 }
 
 float4 LINE_PSMain(LINE_PS_IN input) : SV_Target

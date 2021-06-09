@@ -9,11 +9,33 @@ TriangleComponent::TriangleComponent() {
 	parameters.numPoints = 0;
 	parameters.numIndeces = 0;
 	parameters.textureFileName = nullptr;
-	vertexShader = nullptr;
-	pixelShader = nullptr;
-	sampler = nullptr;
 	normals = nullptr;
 	compPosition = DirectX::SimpleMath::Vector3(0, 0 ,0);
+
+	vertexBC = nullptr;
+	pixelBC = nullptr;
+	vertexShader = nullptr;
+	pixelShader = nullptr;
+	layout = nullptr;
+	for (int i = 0; i < 4; i++)
+		vBuffers[i] = nullptr;
+	indBuf = nullptr;
+	blend = nullptr;
+	constBuf = nullptr;
+	lightBuf = nullptr;
+	rastState = nullptr;
+	factory = nullptr;
+	texture = nullptr;
+	textureView = nullptr;
+	sampler = nullptr;
+
+	sampleMask = 0;
+	for (int i = 0; i < 4; i++)
+		strides[i] = 0;
+	for (int i = 0; i < 4; i++)
+		offsets[i] = 0;
+	for (int i = 0; i < 4; i++)
+		blendFactor[i] = 0;
 }
 
 TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
@@ -24,10 +46,35 @@ TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
 	parameters.numPoints = param.numPoints;
 	parameters.numIndeces = param.numIndeces;
 	parameters.textureFileName = param.textureFileName;
+	compPosition = param.compPosition;
+	normals = new DirectX::SimpleMath::Vector4[parameters.numPoints];
+	NormalsCalc(); // считаем нормали для освещения
+
+	vertexBC = nullptr;
+	pixelBC = nullptr;
 	vertexShader = nullptr;
 	pixelShader = nullptr;
+	layout = nullptr;
+	for (int i = 0; i < 4; i++)
+		vBuffers[i] = nullptr;
+	indBuf = nullptr;
+	blend = nullptr;
+	constBuf = nullptr;
+	lightBuf = nullptr;
+	rastState = nullptr;
+	factory = nullptr;
+	texture = nullptr;
+	textureView = nullptr;
 	sampler = nullptr;
-	compPosition = param.compPosition;
+
+	sampleMask = 0;
+	for (int i = 0; i < 4; i++)
+		strides[i] = 0;
+	for (int i = 0; i < 4; i++)
+		offsets[i] = 0;
+	for (int i = 0; i < 4; i++)
+		blendFactor[i] = 0;
+
 	// Для загрузчика текстур
 	CoInitialize(NULL); // инициализирует библиотеку COM в текущем потоке
 	CoCreateInstance( // создаем COM объект
@@ -35,9 +82,6 @@ TriangleComponent::TriangleComponent(TriangleComponentParameters param) {
 		NULL, // если NULL, указывает, что объект не создается как часть агрегата
 		CLSCTX_INPROC_SERVER, // выполняется в том же процессе, что и вызывающая функция
 		IID_PPV_ARGS(&factory));
-	normals = new DirectX::SimpleMath::Vector4[parameters.numPoints];
-	std::cout << "Normals: " << std::endl;
-	NormalsCalc(); // считаем нормали для освещения
 }
 
 int TriangleComponent::PrepareResourses(Microsoft::WRL::ComPtr<ID3D11Device> device) {
@@ -361,7 +405,6 @@ int TriangleComponent::LoadTextureFromFile(Microsoft::WRL::ComPtr<ID3D11Device> 
 	delete[] buf;
 
 	return SUCCESS;
-
 }
 
 void TriangleComponent::DestroyResourses() {
@@ -369,10 +412,31 @@ void TriangleComponent::DestroyResourses() {
 		vertexShader->Release();
 	if (pixelShader != nullptr)
 		pixelShader->Release();
-	if (factory != nullptr)
-		factory->Release();
 	if (layout != nullptr)
 		layout->Release();
+	for (int i = 0; i < 4; i++)
+	{
+		if (vBuffers[i] != nullptr)
+			vBuffers[i]->Release();
+	}
+	if (indBuf != nullptr)
+		indBuf->Release();
+	if (blend != nullptr)
+		blend->Release();
+	if (constBuf != nullptr)
+		constBuf->Release();
+	if (lightBuf != nullptr)
+		lightBuf->Release();
+	if (rastState != nullptr)
+		rastState->Release();
+	if (factory != nullptr)
+		factory->Release();
+	if (texture != nullptr)
+		texture->Release();
+	if (textureView != nullptr)
+		textureView->Release();
+	if (sampler != nullptr)
+		sampler->Release();
 }
 
 void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
@@ -398,7 +462,7 @@ void TriangleComponent::Update(ID3D11DeviceContext* context, Camera* camera) {
 	// заполнения константного буфера для света
 	lightData light;
 	light.ViewerPos = DirectX::SimpleMath::Vector4(camera->position.x, camera->position.y, camera->position.z, 1.0f);
-	light.Direction = DirectX::SimpleMath::Vector4(10.0f, 100.0f, 10.0f, 1.0f);;
+	light.Direction = DirectX::SimpleMath::Vector4(-10.0f, 10.0f, -10.0f, 1.0f);;
 	light.Color = DirectX::SimpleMath::Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	D3D11_MAPPED_SUBRESOURCE subresourse2 = {};
 	context->Map( // получение указателя на ресурс и запрет доступа GPU к этому ресурсу
@@ -458,29 +522,16 @@ void TriangleComponent::NormalsCalc() {
 		b = parameters.positions[ind_b];
 		c = parameters.positions[ind_c];
 
-		norm.x = a.y * b.z - a.z * b.y;
-		norm.y = a.z * b.x - a.x * b.z; 
-		norm.z = a.x * b.y - a.y * b.x;
+		p = a - b;
+		q = c - b;
+
+		norm.x = p.y * q.z - p.z * q.y;
+		norm.y = p.z * q.x - p.x * q.z; 
+		norm.z = p.x * q.y - p.y * q.x;
 		norm.w = 1.0f;
 
 		normals[ind_a] = norm;
 		normals[ind_b] = norm;
 		normals[ind_c] = norm;
-
-		/*std::cout << "p = " << p.x << " " << p.y << " " << p.z << " " << p.w << std::endl;
-		std::cout << "q = " << q.x << " " << q.y << " " << q.z << " " << q.w << std::endl;
-		std::cout << "norm.Cross(p, q) = " << norm.Cross(p, q).x << " " << norm.Cross(p, q).y << " " << norm.Cross(p, q).z << " " << norm.Cross(p, q).w << std::endl;
-		std::cout << "norm = " << norm.x << " " << norm.y << " " << norm.z << " " << norm.w << std::endl;*/
 	}; 
-
-	for (int i = 0; i < parameters.numIndeces; i += 3)
-	{
-		ind_a = parameters.indeces[i];
-		ind_b = parameters.indeces[i + 1];
-		ind_c = parameters.indeces[i + 2];
-		std::cout << normals[ind_a].x << " " << normals[ind_a].y << " " << normals[ind_a].z << " " << normals[ind_a].w << std::endl;
-		std::cout << normals[ind_b].x << " " << normals[ind_b].y << " " << normals[ind_b].z << " " << normals[ind_b].w << std::endl;
-		std::cout << normals[ind_c].x << " " << normals[ind_c].y << " " << normals[ind_c].z << " " << normals[ind_c].w << std::endl;
-	}
-	std::cout << std::endl;
 }
