@@ -2,6 +2,7 @@
 #include "pch.h"
 
 #include "InputDevice.h"
+#define PI 3.1415926535
 
 class Camera {
 private:

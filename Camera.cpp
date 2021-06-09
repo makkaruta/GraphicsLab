@@ -1,6 +1,5 @@
-#include "Pch.h"
+#include "pch.h"
 #include "Camera.h"
-#define PI 3.1415926535
 
 void Camera::Initialize(int screenWidth, int screenHeight, InputDevice* inpDev) {
 	inputDevice = inpDev;

@@ -45,6 +45,12 @@ private:
 	void Draw();
 	void ErrorsOutput(int ErrorCode);
 
+	void CreateGrid();
+	void CreateCube();
+	void CreatePyramid();
+	void CreateSphere();
+	void CreateCapsule();
+
 public:
 	Game();
 	void Run();
