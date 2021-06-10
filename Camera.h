@@ -17,7 +17,7 @@ public:
 	float VelocityMagnitude = 5.0f; 
 	float MouseSensetivity = 1.0f;
 
-	void Initialize(int screenWidth, int screenHeight, InputDevice* inpDev);
+	void Initialize(DirectX::SimpleMath::Vector3 pos, float yaw, float pitch, int screenWidth, int screenHeight, InputDevice* inpDev);
 	void Update(float deltaTime, int screenWidth, int screenHeight);
 	void OnMouseMove(const MouseMoveEventArgs& args);
 };

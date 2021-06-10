@@ -17,19 +17,20 @@ class Game {
 private:
 	Microsoft::WRL::ComPtr<ID3D11Device> device;
 	DisplayWin32 Display;
-	D3D11_VIEWPORT viewport; // размеры области просмотра
+	D3D11_VIEWPORT* viewport; // размеры вьюпорта
+	int numVP; // количество вьюпортов
 	std::vector <GameComponent*> Components; // вектор компонент (акторов)
 	ID3D11DeviceContext* context; // структура, содержащая сведения об атрибутах рисования устройства, таких как экран или принтер
 	// Все вызовы рисования выполняются через объект контекста устройства, который инкапсулирует интерфейсы.
 	IDXGISwapChain* swapChain; // свапчейн (цепочка подкачки)
-	ID3D11RenderTargetView* rtv; // целевой объект рендеринга
+	ID3D11RenderTargetView** rtv; // целевой объект рендеринга
 	ID3D11Texture2D* depthBuffer;
 	ID3D11DepthStencilView* depthView;
 	ID3DUserDefinedAnnotation* annotation; // Описание концептуальных разделов и маркеров в потоке кода приложения
 	// Позволяет переходить к интересующим частям временной шкалы или понимать, какой набор вызовов Direct3D производится какими разделами кода приложения
 	ID3D11Debug* debug; // Интерфейс отладки управляет настройками отладки и проверяет состояние конвейера
 	InputDevice inputDevice;
-	Camera camera;
+	std::vector <Camera*> camera;
 
 	std::chrono::time_point<std::chrono::steady_clock> prevTime;
 	float deltaTime;
@@ -40,8 +41,9 @@ private:
 	int PrepareResources();
 	void DestroyResources();
 	void PrepareFrame();
+	void PrepareFrameViewport(int nVP);
 	void EndFrame();
-	void Update();
+	void Update(int nVP);
 	void Draw();
 	void ErrorsOutput(int ErrorCode);
 

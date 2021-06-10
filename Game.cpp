@@ -9,13 +9,23 @@ Game::Game() {
 	depthView = nullptr;
 	annotation = nullptr;
 	debug = nullptr;
+	viewport = nullptr;
 }
 
 void Game::Run() {
 	Initialize();
 	Display.CreateDisplay(&inputDevice);
 	inputDevice.Initialize(Display.get_hWnd());
-	camera.Initialize(Display.get_screenWidth(), Display.get_screenHeight(), &inputDevice);
+
+	camera.push_back(new Camera);
+	camera.back()->Initialize(DirectX::SimpleMath::Vector3( 0.0f, 0.5f, 2.0f ), (1.57 / 2), (1.57 / 2), Display.get_screenWidth(), Display.get_screenHeight(), &inputDevice);
+	camera.push_back(new Camera);
+	camera.back()->Initialize(DirectX::SimpleMath::Vector3(14.0f, 0.5f, 0.0f), 1.4, 0.4, Display.get_screenWidth(), Display.get_screenHeight(), nullptr);
+	camera.push_back(new Camera);
+	camera.back()->Initialize(DirectX::SimpleMath::Vector3(3.0f, 0.5f, 12.0f), 0.0, 0.4, Display.get_screenWidth(), Display.get_screenHeight(), nullptr);
+	camera.push_back(new Camera);
+	camera.back()->Initialize(DirectX::SimpleMath::Vector3(5.0f, 10.0f, 0.0f), 1.57, -1.5, Display.get_screenWidth(), Display.get_screenHeight(), nullptr);
+
 	int errors = PrepareResources();
 	ErrorsOutput(errors);
 
@@ -32,8 +42,12 @@ void Game::Run() {
 		if (errors == 0)
 		{
 			PrepareFrame();
-			Update();
-			Draw();
+			for (int i = 0; i < numVP; i++)
+			{
+				PrepareFrameViewport(i);
+				Update(i);
+				Draw();
+			}
 			EndFrame();
 		}
 	}
@@ -42,8 +56,8 @@ void Game::Run() {
 
 void Game::Initialize() {
 	CreateGrid();
-	//CreateCube();
-	//CreatePyramid();
+	CreateCube();
+	CreatePyramid();
 	//CreateSphere();
 	CreateCapsule();
 }
@@ -63,7 +77,7 @@ int Game::PrepareResources() {
 	swapDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // описывает использование параметры доступа к ЦП для заднего буфера (рендер на экран)
 	swapDesc.OutputWindow = Display.get_hWnd(); // дескриптор окна вывода
 	swapDesc.Windowed = true;
-	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // параметры обработки пикселей после вызова свапчейна (отбрасывает содержимое заднего буфера после свапчейна)
+	swapDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL; // DISCARD; // параметры обработки пикселей после вызова свапчейна (отбрасывает содержимое заднего буфера после свапчейна)
 	swapDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH; // флаги: разрешить приложению переключать режимы из оконного в полноэкранный (разрешение будет изменено в соответствии с размерами окна приложения)
 	swapDesc.SampleDesc.Count = 1; // количество мультисэмплов на пиксель (для сглаживания)
 	swapDesc.SampleDesc.Quality = 0; // уровень качества изображения
@@ -90,9 +104,14 @@ int Game::PrepareResources() {
 	if (FAILED(res))
 		return ERROR_SWAPCHAIN_BUF;
 
-	res = device->CreateRenderTargetView(backTex, nullptr, &rtv); // Создание представления целевого объекта рендеринга
-	if (FAILED(res))
-		return ERROR_RENDER_TARGER;
+	numVP = 4;
+	rtv = new ID3D11RenderTargetView* [numVP];
+	for (int i = 0; i < numVP; i++)
+	{
+		res = device->CreateRenderTargetView(backTex, nullptr, &(rtv[i])); // Создание представления целевого объекта рендеринга
+		if (FAILED(res))
+			return ERROR_RENDER_TARGER;
+	}
 
 	D3D11_TEXTURE2D_DESC depthTexDesc = {};
 	depthTexDesc.ArraySize = 1; // количество текстур в массиве текстур
@@ -120,12 +139,35 @@ int Game::PrepareResources() {
 	context->QueryInterface(IID_ID3DUserDefinedAnnotation, (void**)&annotation); // Запрос интерфейса аннотации
 	device->QueryInterface(IID_ID3D11Debug, (void**)&debug); // Запрос интерфейса отладки
 
-	viewport.Width = static_cast<float>(Display.get_screenWidth());
-	viewport.Height = static_cast<float>(Display.get_screenHeight());
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1.0f;
+	viewport = new D3D11_VIEWPORT[numVP];
+	
+	viewport[0].Width = static_cast<float>(Display.get_screenWidth()) / 2;
+	viewport[0].Height = static_cast<float>(Display.get_screenHeight()) / 2;
+	viewport[0].TopLeftX = 0;
+	viewport[0].TopLeftY = 0;
+	viewport[0].MinDepth = 0;
+	viewport[0].MaxDepth = 1.0f;
+	
+	viewport[1].Width = static_cast<float>(Display.get_screenWidth()) / 2;
+	viewport[1].Height = static_cast<float>(Display.get_screenHeight()) / 2;
+	viewport[1].TopLeftX = static_cast<float>(Display.get_screenWidth()) / 2;
+	viewport[1].TopLeftY = 0;
+	viewport[1].MinDepth = 0;
+	viewport[1].MaxDepth = 1.0f;
+	
+	viewport[2].Width = static_cast<float>(Display.get_screenWidth()) / 2;
+	viewport[2].Height = static_cast<float>(Display.get_screenHeight()) / 2;
+	viewport[2].TopLeftX = 0;
+	viewport[2].TopLeftY = static_cast<float>(Display.get_screenHeight()) / 2;
+	viewport[2].MinDepth = 0;
+	viewport[2].MaxDepth = 1.0f;
+	
+	viewport[3].Width = static_cast<float>(Display.get_screenWidth()) / 2;
+	viewport[3].Height = static_cast<float>(Display.get_screenHeight()) / 2;
+	viewport[3].TopLeftX = static_cast<float>(Display.get_screenWidth()) / 2;
+	viewport[3].TopLeftY = static_cast<float>(Display.get_screenHeight()) / 2;
+	viewport[3].MinDepth = 0;
+	viewport[3].MaxDepth = 1.0f;
 
 	int result;
 	for (int i = 0; i < Components.size(); i++)
@@ -155,8 +197,14 @@ void Game::DestroyResources() {
 	}
 	if (swapChain != nullptr)
 		swapChain->Release();
-	if (rtv != nullptr)
-		rtv->Release();
+	//if (rtv != nullptr)
+	//{
+	//	for (int i = 0; i < numVP; i++)
+	//	{
+	//		if (rtv[i] != nullptr)
+	//			rtv[i]->Release();
+	//	}
+	//}
 	if (depthBuffer)
 		depthBuffer->Release();
 	if (depthView != nullptr)
@@ -184,22 +232,25 @@ void Game::PrepareFrame() {
 		frameCount = 0;
 	}
 	context->ClearState();
-	float color[] = { 0.08f, 0.0f, 0.24f, 1.0f };
-	context->OMSetRenderTargets(1, &rtv, depthView); // привязка рендер таргета и буфера глубин к заднему буферу
-	context->ClearRenderTargetView(rtv, color);
 	context->ClearDepthStencilView(depthView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-	context->RSSetViewports(1, &viewport); // первый параметр - количество окон
+	float color[] = { 0.08f, 0.0f, 0.24f, 0.0f };
+	context->ClearRenderTargetView(rtv[0], color);
+}
+
+void Game::PrepareFrameViewport(int nVP) {
+	context->OMSetRenderTargets(1, &rtv[nVP], depthView); // привязка рендер таргета и буфера глубин к заднему буферу
+	context->RSSetViewports(1, &viewport[nVP]);
 }
 
 void Game::EndFrame() {
 	swapChain->Present(1, /*DXGI_PRESENT_DO_NOT_WAIT*/ 0); // замена переднего буфера на задний после отрисовки в задний
 }
 
-void Game::Update() {
+void Game::Update(int nVP) {
 	annotation->BeginEvent(L"BeginUpdate");
-	camera.Update(deltaTime, Display.get_screenWidth(), Display.get_screenHeight());
+	camera.at(nVP)->Update(deltaTime, Display.get_screenWidth(), Display.get_screenHeight());
 	for (int i = 0; i < Components.size(); i++)
-		Components[i]->Update(context, &camera); 
+		Components[i]->Update(context, camera.at(nVP));
 	annotation->EndEvent();
 }
 
@@ -446,13 +497,13 @@ void Game::CreatePyramid() {
 	DirectX::SimpleMath::Vector4(0.5f, 0.0f, 1.0f, 1.0f) };
 	pyramid.indeces = new int[] {
 		0, 1, 2, // 1 часть основания
-			2, 3, 0, // 2 часть основания
-			4, 6, 5, // 1 боковая грань
-			7, 9, 8, // 2 боковая грань
-			10, 12, 11, // 3 боковая грань
-			13, 15, 14}; // 4 боковая грань
+		2, 3, 0, // 2 часть основания
+		4, 6, 5, // 1 боковая грань
+		7, 9, 8, // 2 боковая грань
+		10, 12, 11, // 3 боковая грань
+		13, 15, 14}; // 4 боковая грань
 	pyramid.textureFileName = L"textures/colorful.png";
-	pyramid.compPosition = DirectX::SimpleMath::Vector3(1.5, 0, 1);
+	pyramid.compPosition = DirectX::SimpleMath::Vector3(1.5, 0, -3);
 	Components.push_back(new TriangleComponent(pyramid));
 }
 
